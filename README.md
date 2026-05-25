@@ -1,6 +1,6 @@
 # Unified Trader — Cloud Dashboard
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://yb-mdd-or-dashboard.streamlit.app/)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://bear-upper-bound-escape-valve.streamlit.app/)
 
 Streamlit Community Cloud로 배포된 백테스트 + Alpaca paper 통합 봇 실시간 모니터링 대시보드.
 휴대폰·태블릿에서 어디서나 접근 가능.
