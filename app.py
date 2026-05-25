@@ -1,9 +1,9 @@
 """
-Unified Trader — Streamlit 대시보드 (Tier 2 GOLD_ESCAPE bm=90)
+BUBE Trader — Streamlit 대시보드 (Tier 2 GOLD_ESCAPE bm=90)
 ===============================================================
 백테스트 결과 + 신뢰구간 + Alpaca paper 통합 봇 실시간 모니터링.
 
-2026-05-24 통합: 기존 YB MDD OR + Rotation P5.5 두 봇 → unified_trader.py 하나.
+2026-05-24 통합: 기존 YB MDD OR + Rotation P5.5 두 봇 → bube_trader.py 하나.
 
 탭 구성:
 1. 📊 Overview — 매매법 spec
@@ -12,7 +12,7 @@ Unified Trader — Streamlit 대시보드 (Tier 2 GOLD_ESCAPE bm=90)
 4. 🎲 Bootstrap — 5,000 paths 신뢰구간
 5. 📅 Year-by-Year — 16년 long-horizon
 6. 🔄 Walk-Forward / OOS — 동적 vs 정적
-7. 💰 Unified Live — Alpaca paper 실시간 + regime + active sub-strategy
+7. 💰 BUBE Live — Alpaca paper 실시간 + regime + active sub-strategy
 """
 from __future__ import annotations
 import json
@@ -27,7 +27,7 @@ ROOT = Path(__file__).parent / "data"
 st.set_page_config(page_title="YB MDD OR Dashboard", layout="wide", page_icon="🚽")
 
 # Alpaca credentials from Streamlit secrets (cloud) or env (local)
-# Unified trader: ALPACA_API_KEY / ALPACA_SECRET_KEY (2026-05-24 통합 후 새 paper 계정)
+# BUBE trader: ALPACA_API_KEY / ALPACA_SECRET_KEY (2026-05-24 통합 후 새 paper 계정)
 import os as _os
 try:
     if "ALPACA_API_KEY" in st.secrets:
@@ -64,7 +64,7 @@ def fmt(x, places=2):
 # ───────────────────────────────────────────────────────────
 st.markdown("""
 <div style="background:linear-gradient(135deg,#1a2540,#2c3e50);padding:24px 32px;border-radius:12px;color:white;margin-bottom:16px">
-  <h1 style="margin:0;font-size:1.8em">🚽 Unified Trader — T2 GOLD_ESCAPE bm=90</h1>
+  <h1 style="margin:0;font-size:1.8em">🚽 BUBE Trader — T2 GOLD_ESCAPE bm=90</h1>
   <div style="opacity:0.85;margin-top:6px">롱변기 (BULL/NEUTRAL) + 양변기 v5 F1_A6 (BEAR) + 황금변기 (BEAR streak &gt; 90d escape)</div>
 </div>
 """, unsafe_allow_html=True)
@@ -80,7 +80,7 @@ st.markdown("---")
 
 tabs = st.tabs(["📊 Overview", "📋 거래 내역", "📈 Stress Tests", "🎲 Bootstrap",
                 "📅 Year-by-Year", "🔄 Walk-Forward / OOS",
-                "💰 Unified Live"])
+                "💰 BUBE Live"])
 
 # ───────────────────────────────────────────────────────────
 # TAB 1: Overview
@@ -731,10 +731,10 @@ with tabs[5]:
 
 
 # ───────────────────────────────────────────────────────────
-# TAB 7: Unified Live (Tier 2 GOLD_ESCAPE bm=90)
+# TAB 7: BUBE Live (Tier 2 GOLD_ESCAPE bm=90)
 # ───────────────────────────────────────────────────────────
 with tabs[6]:
-    st.subheader("💰 Unified Trader — Alpaca Paper (T2 GOLD_ESCAPE bm=90)")
+    st.subheader("💰 BUBE Trader — Alpaca Paper (T2 GOLD_ESCAPE bm=90)")
     st.caption("2026-05-24 통합 봇. GitHub Actions × cron-job.org 자동 운영. 04:00 HST 데이터 60초 캐시.")
 
     # ── Section A: Spec card ──
@@ -753,7 +753,7 @@ with tabs[6]:
     # ── Section B: Today's regime + active sub-strategy ──
     @st.cache_data(ttl=300)  # 5분 캐시 (yfinance 다수 호출)
     def _compute_regime_state():
-        """unified_trader.py와 동일 로직: consensus + fast OR + dwell 5 + bear_max 90."""
+        """bube_trader.py와 동일 로직: consensus + fast OR + dwell 5 + bear_max 90."""
         try:
             import yfinance as yf
             import datetime as _dt
@@ -919,9 +919,9 @@ with tabs[6]:
     data = _fetch_alpaca()
     if "error" in data:
         st.error(f"Alpaca 연결 실패: {data['error']}")
-        st.caption("Streamlit Cloud → ⚙ Settings → Secrets에 다음 2줄 등록 (2026-05-24 신규 unified paper 계정):")
-        st.code('ALPACA_API_KEY = "<신규 unified paper PK key>"\n'
-                'ALPACA_SECRET_KEY = "<신규 unified paper secret>"',
+        st.caption("Streamlit Cloud → ⚙ Settings → Secrets에 다음 2줄 등록 (2026-05-24 신규 BUBE paper 계정):")
+        st.code('ALPACA_API_KEY = "<신규 BUBE paper PK key>"\n'
+                'ALPACA_SECRET_KEY = "<신규 BUBE paper secret>"',
                 language="toml")
         st.caption("실제 key는 GitHub repo sunghakg/yb-mdd-or-trader → Settings → Secrets에 등록된 값 그대로 사용.")
     else:
@@ -956,9 +956,9 @@ with tabs[6]:
             st.info("오늘 주문 없음")
 
     st.markdown("---")
-    st.markdown("**🔗 Alpaca 신규 unified paper 계정**: https://app.alpaca.markets/paper/dashboard/overview")
-    st.markdown("**🔗 GitHub Actions (unified workflows)**: https://github.com/sunghakg/yb-mdd-or-trader/actions")
+    st.markdown("**🔗 Alpaca 신규 BUBE paper 계정**: https://app.alpaca.markets/paper/dashboard/overview")
+    st.markdown("**🔗 GitHub Actions (bube workflows)**: https://github.com/sunghakg/yb-mdd-or-trader/actions")
     st.markdown("**🔗 cron-job.org (4 트리거)**: https://console.cron-job.org/jobs")
-    st.caption("자동 트리거: 03:25 / 03:35 / 09:55 / 10:00 HST (월-금). Telegram prefix: 🚽 UNIFIED")
+    st.caption("자동 트리거: 03:25 / 03:35 / 09:55 / 10:00 HST (월-금). Telegram prefix: 🚽 BUBE")
 
 
