@@ -1,0 +1,15 @@
+{
+  "completed_at": "2026-05-23T21:50:04.999990",
+  "elapsed_min": 1.2901764333333332,
+  "n_paths_bootstrap": 6000,
+  "outputs": {
+    "V2": "V2_param_sensitivity.csv",
+    "V3": "V3_bootstrap.csv",
+    "V4": "V4_cost_sensitivity.csv",
+    "V5": "V5_time_split.csv",
+    "V6": "V6_crisis_stress.csv",
+    "V7": "V7_random_sanity.csv",
+    "V8": "V8_yearly.csv",
+    "V9": "V9_drawdown.csv"
+  }
+}

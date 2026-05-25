@@ -552,7 +552,66 @@ with tabs[1]:
 # TAB 3: Stress Tests
 # ───────────────────────────────────────────────────────────
 with tabs[2]:
-    st.subheader("폭락 사이클 검증 — 7개 사이클 (16년 일봉)")
+    # ── Section 1: BUBE rotation V6 crisis stress (PRIMARY) ──
+    st.subheader("🛡️ BUBE V6 Crisis Stress (2026-05-23)")
+    st.caption("V_bear_cap_comprehensive — 5개 위기 × T1 (NEUTRAL→황금변기) / T2GE (BUBE GOLD_ESCAPE) × bear_max 변형")
+
+    def _bm_label(x):
+        if pd.isna(x) or str(x).lower() in ("none", "nan"):
+            return "baseline"
+        return f"bm{int(float(x))}"
+
+    v6_path = ROOT / "V_bear_cap" / "V6_crisis_stress.csv"
+    if v6_path.exists():
+        v6 = pd.read_csv(v6_path)
+
+        # Pivot: rows = crisis, cols = spec (tier+bear_max), values = total_ret
+        v6["spec"] = v6["tier"].astype(str) + "_" + v6["bear_max"].apply(_bm_label)
+        pivot_ret = v6.pivot_table(index="crisis", columns="spec", values="total_ret", aggfunc="first")
+        pivot_mdd = v6.pivot_table(index="crisis", columns="spec", values="mdd", aggfunc="first")
+
+        # Highlighted view: T1 baseline vs T1 bm60 vs T2GE baseline vs T2GE bm90
+        key_cols = ["T1_baseline", "T1_bm60", "T2GE_baseline", "T2GE_bm90"]
+        avail_cols = [c for c in key_cols if c in pivot_ret.columns]
+        if avail_cols:
+            display_df = pd.DataFrame(index=pivot_ret.index)
+            for col in avail_cols:
+                display_df[f"{col} Ret"] = pivot_ret[col].apply(lambda x: fmt_pct(x) if pd.notna(x) else "—")
+                display_df[f"{col} MDD"] = pivot_mdd[col].apply(lambda x: fmt_pct(x) if pd.notna(x) else "—")
+            st.dataframe(display_df, use_container_width=True)
+
+            # Alpha vs baseline
+            st.markdown("### Δ Return: bear_cap escape valve 알파")
+            alpha_rows = []
+            for crisis in pivot_ret.index:
+                row = {"Crisis": crisis}
+                if "T1_baseline" in pivot_ret.columns and "T1_bm60" in pivot_ret.columns:
+                    delta = pivot_ret.loc[crisis, "T1_bm60"] - pivot_ret.loc[crisis, "T1_baseline"]
+                    row["T1 bm60 Δ"] = f"{delta*100:+.1f}%p" if abs(delta) > 0.001 else "0 (escape 미발동)"
+                if "T2GE_baseline" in pivot_ret.columns and "T2GE_bm90" in pivot_ret.columns:
+                    delta = pivot_ret.loc[crisis, "T2GE_bm90"] - pivot_ret.loc[crisis, "T2GE_baseline"]
+                    row["T2GE bm90 Δ"] = f"{delta*100:+.1f}%p" if abs(delta) > 0.001 else "0 (escape 미발동)"
+                if "T2GE_baseline" in pivot_ret.columns and "T2GE_bm60" in pivot_ret.columns:
+                    delta = pivot_ret.loc[crisis, "T2GE_bm60"] - pivot_ret.loc[crisis, "T2GE_baseline"]
+                    row["T2GE bm60 Δ (위험!)"] = f"{delta*100:+.1f}%p" if abs(delta) > 0.001 else "0"
+                alpha_rows.append(row)
+            st.dataframe(pd.DataFrame(alpha_rows), use_container_width=True, hide_index=True)
+
+            st.info(
+                "**핵심**: 5 위기 중 **2022_full만 escape 발동**. T1 bm60 +3.5%p, T2GE bm90 +5%p 알파. "
+                "T2GE **bm60는 절대 금지** (2022 -10.9%p 폭망)."
+            )
+
+        with st.expander("전체 변형 (T1 bm30/45/60/None, T2GE bm60/90/None)"):
+            st.dataframe(v6.round(4), use_container_width=True, hide_index=True)
+    else:
+        st.warning("V_bear_cap/V6_crisis_stress.csv 없음")
+
+    st.markdown("---")
+
+    # ── Section 2: 양변기 v5 단독 16년 일봉 (BEAR slot 컴포넌트) ──
+    st.subheader("📜 양변기 v5 단독 — BEAR slot 컴포넌트 (16년 일봉)")
+    st.caption("ℹ️ BUBE의 BEAR regime sub-strategy 단독 백테. 참고용.")
     crash_rows = [
         ("2011 Euro crisis", -53.2, -6.4, -19.5, -0.44),
         ("2015-16 China", -33.1, +6.8, -10.1, 1.04),
@@ -562,14 +621,12 @@ with tabs[2]:
         ("2024-08 Aug shock", -47.9, +8.0, -5.1, 11.52),
         ("2025 Tariff", -9.9, +5.0, -8.6, 3.23),
     ]
-    df_crash = pd.DataFrame(crash_rows, columns=["Period", "B&H Ret %", "YB Ret %", "YB MDD %", "YB Calmar"])
-    df_crash["Outcome"] = df_crash["YB Ret %"].apply(lambda x: "✅ 양수" if x > 0 else "⚠️ 손실")
+    df_crash = pd.DataFrame(crash_rows, columns=["Period", "B&H Ret %", "YB v5 Ret %", "YB v5 MDD %", "YB v5 Calmar"])
+    df_crash["Outcome"] = df_crash["YB v5 Ret %"].apply(lambda x: "✅ 양수" if x > 0 else "⚠️ 손실")
     st.dataframe(df_crash, use_container_width=True, hide_index=True)
-
-    st.markdown("**핵심**: 7개 중 6개에서 양수. 2011 Euro만 -6%이지만 B&H -53% 대비 1/8 수준.")
     st.markdown("---")
 
-    st.subheader("8년 분봉 stress (IBKR)")
+    st.subheader("8년 분봉 stress (양변기 v5 단독, IBKR)")
     extended = load_json(ROOT / "extended_stress_oos" / "summary.json")
     if extended:
         # Show only 2022/Covid/2018 for key crashes (분봉)
@@ -598,7 +655,86 @@ with tabs[2]:
 # TAB 4: Bootstrap
 # ───────────────────────────────────────────────────────────
 with tabs[3]:
-    st.subheader("Bootstrap 5,000 paths — 통계적 신뢰구간")
+    # ── Section 1: BUBE rotation V3 bootstrap (PRIMARY) ──
+    st.subheader("🎲 BUBE V3 Bootstrap — 6,000 paths (2026-05-23)")
+    st.caption("V_bear_cap_comprehensive — 4 spec × 11 metric × 6000 stationary block bootstrap paths")
+
+    v3_path = ROOT / "V_bear_cap" / "V3_bootstrap.csv"
+    if v3_path.exists():
+        v3 = pd.read_csv(v3_path)
+
+        # Spec ordering: highlight T2GE bm90 + show others
+        spec_order = ["T2GE_bm90", "T2GE_None", "T1_bm60", "T1_None", "T2GE_bm60", "T1_bm45", "T1_bm30"]
+        v3["spec_rank"] = v3["spec"].map({s: i for i, s in enumerate(spec_order)}).fillna(99)
+        v3 = v3.sort_values("spec_rank").drop(columns="spec_rank")
+
+        rows = []
+        for _, r in v3.iterrows():
+            star = " 🏆" if r["spec"] == "T2GE_bm90" else (" ⚠️" if r["spec"] == "T2GE_bm60" else "")
+            rows.append({
+                "Spec": f"{r['spec']}{star}",
+                "Cal p05": fmt(r["cal_p05"]),
+                "Cal p50": fmt(r["cal_p50"]),
+                "Cal p95": fmt(r["cal_p95"]),
+                "CAGR p50": fmt_pct(r["cagr_p50"]),
+                "MDD p50": fmt_pct(r["mdd_p50"]),
+                "P(MDD<-30%)": f"{r['p_mdd_under_30p']*100:.1f}%",
+                "P(MDD<-40%)": f"{r['p_mdd_under_40p']*100:.1f}%",
+                "P(Cal>2)": f"{r['p_cal_over_2']*100:.1f}%",
+                "P(Cal>3)": f"{r['p_cal_over_3']*100:.1f}%",
+            })
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+        # Key comparisons
+        col1, col2 = st.columns(2)
+        t1_b = v3[v3["spec"] == "T1_None"].iloc[0] if (v3["spec"] == "T1_None").any() else None
+        t1_60 = v3[v3["spec"] == "T1_bm60"].iloc[0] if (v3["spec"] == "T1_bm60").any() else None
+        t2_b = v3[v3["spec"] == "T2GE_None"].iloc[0] if (v3["spec"] == "T2GE_None").any() else None
+        t2_90 = v3[v3["spec"] == "T2GE_bm90"].iloc[0] if (v3["spec"] == "T2GE_bm90").any() else None
+
+        if t1_b is not None and t1_60 is not None:
+            col1.markdown("### T1 (NEUTRAL→황금변기)")
+            col1.metric("Cal p50 (baseline → bm60)",
+                        f"{t1_b['cal_p50']:.2f} → {t1_60['cal_p50']:.2f}",
+                        f"+{t1_60['cal_p50']-t1_b['cal_p50']:.2f}")
+            col1.metric("P(Cal>3)",
+                        f"{t1_b['p_cal_over_3']*100:.1f}% → {t1_60['p_cal_over_3']*100:.1f}%",
+                        f"+{(t1_60['p_cal_over_3']-t1_b['p_cal_over_3'])*100:.1f}%p")
+
+        if t2_b is not None and t2_90 is not None:
+            col2.markdown("### T2GE (BUBE GOLD_ESCAPE)")
+            col2.metric("Cal p50 (baseline → bm90)",
+                        f"{t2_b['cal_p50']:.2f} → {t2_90['cal_p50']:.2f}",
+                        f"+{t2_90['cal_p50']-t2_b['cal_p50']:.2f}")
+            col2.metric("P(Cal>3)",
+                        f"{t2_b['p_cal_over_3']*100:.1f}% → {t2_90['p_cal_over_3']*100:.1f}%",
+                        f"+{(t2_90['p_cal_over_3']-t2_b['p_cal_over_3'])*100:.1f}%p")
+
+        st.info(
+            "**Free lunch 확인**: T2GE bm90이 baseline 대비 Cal 우월 + MDD risk 동등 (P(MDD<-30%) 88.0% vs 87.1%). "
+            "🏆 = production 추천, ⚠️ = V6 stress -10.9%p 폭망 위험으로 절대 금지."
+        )
+
+        # V9 drawdown duration supplement
+        v9_path = ROOT / "V_bear_cap" / "V9_drawdown.csv"
+        if v9_path.exists():
+            v9 = pd.read_csv(v9_path)
+            st.markdown("### V9 Drawdown Duration")
+            v9_disp = v9.copy()
+            v9_disp["spec"] = v9_disp["tier"].astype(str) + "_" + v9_disp["bear_max"].apply(_bm_label)
+            v9_disp = v9_disp[["spec","underwater_pct","longest_underwater_days","mdd","worst_day_pct"]]
+            v9_disp["underwater_pct"] = v9_disp["underwater_pct"].apply(lambda x: f"{x*100:.1f}%")
+            v9_disp["mdd"] = v9_disp["mdd"].apply(fmt_pct)
+            v9_disp["worst_day_pct"] = v9_disp["worst_day_pct"].apply(fmt_pct)
+            v9_disp.columns = ["Spec", "Underwater %", "Longest UW (days)", "MDD", "Worst day"]
+            st.dataframe(v9_disp, use_container_width=True, hide_index=True)
+            st.caption("T1 bm60 longest UW **246d → 156d (-90일, -37%)**. MDD 동일하지만 회복 속도 대폭 상승.")
+    else:
+        st.warning("V_bear_cap/V3_bootstrap.csv 없음")
+
+    st.markdown("---")
+    st.subheader("📜 양변기 v5 단독 — BEAR slot 컴포넌트 5,000 paths (참고용)")
+    st.caption("ℹ️ BUBE의 BEAR regime sub-strategy 단독 bootstrap. BUBE rotation 전체와는 다름.")
     bs = load_json(ROOT / "bootstrap_results" / "summary.json")
     if bs:
         rows = []
@@ -639,7 +775,76 @@ with tabs[3]:
 # TAB 5: Year-by-Year
 # ───────────────────────────────────────────────────────────
 with tabs[4]:
-    st.subheader("16년 일봉 연도별 (YB MDD OR vs SOXL B&H)")
+    # ── Section 1: BUBE V8 yearly breakdown (PRIMARY) ──
+    st.subheader("📅 BUBE V8 Yearly (2018-2026, 9년)")
+    st.caption("V_bear_cap_comprehensive — T1 / T2GE × bear_max 변형 연도별 수익률 + escape 발동 일수")
+
+    v8_path = ROOT / "V_bear_cap" / "V8_yearly.csv"
+    if v8_path.exists():
+        v8 = pd.read_csv(v8_path)
+        # Normalize bear_max
+        v8["bm_label"] = v8["bear_max"].apply(_bm_label)
+        v8["spec"] = v8["tier"].astype(str) + "_" + v8["bm_label"]
+
+        # Focus specs: T1_baseline, T1_bm60, T2GE_baseline, T2GE_bm90
+        focus = ["T1_baseline", "T1_bm60", "T2GE_baseline", "T2GE_bm90"]
+        v8f = v8[v8["spec"].isin(focus)].copy()
+        # Pivot ret
+        pivot_ret = v8f.pivot_table(index="year", columns="spec", values="ret", aggfunc="first")
+        pivot_esc = v8f.pivot_table(index="year", columns="spec", values="escape_days", aggfunc="first")
+
+        # Display
+        rows = []
+        for yr in pivot_ret.index:
+            row = {"Year": int(yr)}
+            for spec in focus:
+                if spec in pivot_ret.columns:
+                    ret = pivot_ret.loc[yr, spec]
+                    esc = pivot_esc.loc[yr, spec] if spec in pivot_esc.columns else 0
+                    val = fmt_pct(ret) if pd.notna(ret) else "—"
+                    if pd.notna(esc) and esc > 0 and "bm" in spec:
+                        val += f" ⚡{int(esc)}d"
+                    row[spec] = val
+            rows.append(row)
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        st.caption("⚡ = bear_cap escape valve 발동 일수 (해당 연도 BUBE 효과 발생)")
+
+        # Cumulative + alpha
+        st.markdown("### 누적 수익 (compound)")
+        cum_rows = []
+        for spec in focus:
+            if spec in pivot_ret.columns:
+                cum = (1 + pivot_ret[spec].fillna(0)).prod() - 1
+                cum_rows.append({"Spec": spec, "9년 누적 ret": fmt_pct(cum)})
+        st.dataframe(pd.DataFrame(cum_rows), use_container_width=True, hide_index=True)
+
+        # Highlight escape-active years
+        active_years = v8f[(v8f["bm_label"] != "baseline") & (v8f["escape_days"] > 0)]
+        if not active_years.empty:
+            st.markdown("### Escape valve 발동 연도")
+            disp = active_years[["tier","bm_label","year","ret","escape_days"]].copy()
+            disp["ret"] = disp["ret"].apply(fmt_pct)
+            disp.columns = ["Tier", "bear_max", "Year", "Return", "Escape days"]
+            st.dataframe(disp, use_container_width=True, hide_index=True)
+            st.info(
+                "**8년 표본에서 escape 발동 단 2회** (2020 Covid V-rebound, 2022 폭락 후반 relief rally). "
+                "V8에서 발동 해 모두 양수 alpha — 미발동 해는 baseline과 동일 (free lunch 구조)."
+            )
+
+        with st.expander("전체 변형 (T1 bm30/45/60/None, T2GE bm60/90/None)"):
+            v8_disp = v8.copy()
+            v8_disp["ret"] = v8_disp["ret"].apply(fmt_pct)
+            v8_disp["mdd"] = v8_disp["mdd"].apply(fmt_pct)
+            st.dataframe(v8_disp[["tier","bm_label","year","ret","mdd","escape_days"]],
+                         use_container_width=True, hide_index=True)
+    else:
+        st.warning("V_bear_cap/V8_yearly.csv 없음")
+
+    st.markdown("---")
+
+    # ── Section 2: 양변기 v5 단독 16년 일봉 (참고용) ──
+    st.subheader("📜 양변기 v5 단독 — BEAR slot 16년 일봉 (참고용)")
+    st.caption("ℹ️ BUBE의 BEAR regime sub-strategy 단독. BUBE rotation 전체와는 다름.")
     extra = load_json(ROOT / "yb_mdd_or_extra" / "summary.json")
     if extra and "daily_16yr" in extra:
         yearly = extra["daily_16yr"]["yearly"]
