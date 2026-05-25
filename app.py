@@ -80,7 +80,7 @@ st.markdown("---")
 
 tabs = st.tabs(["📊 Overview", "📋 거래 내역", "📈 Stress Tests", "🎲 Bootstrap",
                 "📅 Year-by-Year", "🔄 Walk-Forward / OOS",
-                "💰 BUBE Live"])
+                "🔀 Slot Rotation", "💰 BUBE Live"])
 
 # ───────────────────────────────────────────────────────────
 # TAB 1: Overview
@@ -145,31 +145,138 @@ alloc by QQQ weekly RSI: ≥60 100% / 45-60 70% / <45 30% watch
 # TAB 2: 기간별 거래 내역 (NEW)
 # ───────────────────────────────────────────────────────────
 with tabs[1]:
-    st.subheader("📋 기간별 상세 거래 내역 (양변기 v5 단독 8년 분봉 풀 백테)")
-    st.caption("ℹ️ BUBE의 **BEAR slot 컴포넌트**(양변기 v5 F1_A6) 백테. 롱변기/황금변기 BUBE 전체 rotation 백테는 별도 산출 필요.")
+    st.subheader("📋 BUBE 전체 rotation 8년 거래 내역 (롱변기 + 양변기 + 황금변기)")
+    st.caption("ℹ️ Tier 2 GOLD_ESCAPE bm=90 mapping. yfinance daily OHLC, $100K seed. multi_strategy_paper.simulate_day 엔진 + BUBE T2 mapping 어댑터.")
 
-    FULL = ROOT / "yb_mdd_or_full"
+    FULL = ROOT / "bube_full"
     if not (FULL / "trades.csv").exists():
-        st.warning("⚠️ 풀백테 캐시 없음. 먼저 실행: `python yb_mdd_or_full_backtest.py`")
+        st.warning("⚠️ BUBE 풀백테 캐시 없음. 먼저 실행: `python local/strategies/regime_rotation_validation/bube_full_backtest.py`")
         st.stop()
 
-    # Last update timestamp + refresh button
-    last_update_file = FULL / "last_update_at.txt"
+    # Summary stats from summary.json
+    bube_summary = load_json(FULL / "summary.json")
+    if bube_summary:
+        c1, c2, c3, c4, c5 = st.columns(5)
+        c1.metric("기간", bube_summary.get("period", "—"))
+        c2.metric("Final Equity",
+                  f"${bube_summary['final_equity']/1e6:.2f}M",
+                  f"{bube_summary['total_return_pct']:+,.0f}%")
+        c3.metric("CAGR", f"{bube_summary['cagr_pct']:+.1f}%")
+        c4.metric("MDD", f"{bube_summary['mdd_pct']:+.1f}%")
+        c5.metric("Calmar", str(bube_summary.get("calmar", "—")))
+
+        usage = bube_summary.get("strategy_usage", {})
+        if usage:
+            usage_str = " · ".join(f"{k}: {v}" for k, v in sorted(usage.items(), key=lambda x: -x[1]))
+            st.caption(f"🔄 Sub-strategy trade events: {usage_str}")
+            if "goldenbyungi" not in usage:
+                st.info(
+                    "ℹ️ 8년 표본에서 **GOLD_ESCAPE 미발동** (BEAR streak > 90일이 발생 안 함). "
+                    "닷컴급 super-bear (31개월 BEAR)에서만 발동되는 escape valve — V_bear_cap dotcom OOS 검증에서 +9.8%p alpha 입증."
+                )
+
+    # ── BUBE 풀 trades quick view ──
+    @st.cache_data
+    def _load_bube_trades():
+        t = pd.read_csv(ROOT / "bube_full" / "trades.csv")
+        t["date"] = pd.to_datetime(t["date"])
+        return t
+
+    bube_trades = _load_bube_trades()
+    bf1, bf2, bf3 = st.columns([2, 1, 1])
+    strategy_sel = bf1.multiselect(
+        "Strategy filter",
+        options=sorted(bube_trades["strategy"].unique()),
+        default=sorted(bube_trades["strategy"].unique()),
+        key="bube_strategy_filter"
+    )
+    action_sel = bf2.multiselect(
+        "Action",
+        options=sorted(bube_trades["action"].unique()),
+        default=sorted(bube_trades["action"].unique()),
+        key="bube_action_filter"
+    )
+    pnl_sel = bf3.radio("PnL", options=["전체", "수익만", "손실만"],
+                         horizontal=True, key="bube_pnl_filter")
+
+    bube_filt = bube_trades[
+        bube_trades["strategy"].isin(strategy_sel) &
+        bube_trades["action"].isin(action_sel)
+    ].copy()
+    if pnl_sel == "수익만":
+        bube_filt = bube_filt[bube_filt["pnl"] > 0]
+    elif pnl_sel == "손실만":
+        bube_filt = bube_filt[bube_filt["pnl"] < 0]
+
+    # Headline stats
+    fc1, fc2, fc3, fc4 = st.columns(4)
+    fc1.metric("Trade events", f"{len(bube_filt):,}")
+    realized = bube_filt["pnl"].sum()
+    fc2.metric("Realized P&L", f"${realized:+,.0f}")
+    nonzero = bube_filt[bube_filt["pnl"] != 0]
+    if len(nonzero):
+        wr = (nonzero["pnl"] > 0).mean() * 100
+        fc3.metric("Win rate (non-zero pnl)", f"{wr:.1f}%")
+    else:
+        fc3.metric("Win rate", "—")
+    fc4.metric("기간",
+               f"{bube_filt['date'].min().date()} → {bube_filt['date'].max().date()}"
+               if len(bube_filt) else "—")
+
+    # Display table
+    disp = bube_filt.copy()
+    disp["date"] = disp["date"].dt.strftime("%Y-%m-%d")
+    disp["qty"] = disp["qty"].apply(lambda x: f"{x:,.2f}")
+    disp["price"] = disp["price"].apply(lambda x: f"${x:.4f}")
+    disp["pnl"] = disp["pnl"].apply(lambda x: f"${x:+,.2f}")
+    disp = disp.rename(columns={
+        "date": "날짜", "strategy": "Sub-strategy", "leg": "방향",
+        "ticker": "Ticker", "action": "Action", "qty": "수량",
+        "price": "체결가", "pnl": "PnL", "side": "Side",
+    })
+    rows_per_page = 100
+    n_pages = max(1, (len(disp) + rows_per_page - 1) // rows_per_page)
+    page = st.number_input(
+        f"Page (총 {len(disp):,} rows, {n_pages} pages)",
+        min_value=1, max_value=n_pages, value=1, key="bube_trade_page"
+    ) if n_pages > 1 else 1
+    start_idx = (page - 1) * rows_per_page
+    st.dataframe(disp.iloc[start_idx:start_idx + rows_per_page],
+                 use_container_width=True, hide_index=True, height=400)
+
+    # CSV download
+    st.download_button(
+        label=f"💾 BUBE trades CSV 다운로드 ({len(bube_filt):,} rows)",
+        data=bube_filt.to_csv(index=False).encode("utf-8-sig"),
+        file_name=f"bube_full_trades_{bube_filt['date'].min().date() if len(bube_filt) else 'empty'}_"
+                  f"{bube_filt['date'].max().date() if len(bube_filt) else 'empty'}.csv",
+        mime="text/csv", key="bube_dl"
+    )
+
+    st.markdown("---")
+    st.markdown("### 📜 양변기 v5 단독 — BEAR slot 컴포넌트 풀 백테 (참고용)")
+    st.caption("ℹ️ BUBE의 BEAR regime에서 active되는 sub-strategy 단독 백테. 8년 분봉 (IBKR) + alloc/bench/regime context 포함 — 거래별 진입사유/청산사유 풀스택 분석은 이쪽이 더 풍부.")
+
+    YB_FULL = ROOT / "yb_mdd_or_full"
+    if not (YB_FULL / "trades.csv").exists():
+        st.info("양변기 v5 단독 풀백테 없음.")
+        st.stop()
+
+    # Last update timestamp
+    last_update_file = YB_FULL / "last_update_at.txt"
     if last_update_file.exists():
         last_update = last_update_file.read_text().strip()
     else:
-        last_update = "캐시 생성 후 미갱신 (Task Scheduler 미실행)"
-    refresh_col1, refresh_col2 = st.columns([3, 1])
-    refresh_col1.caption(f"📅 마지막 갱신: {last_update}")
-    refresh_col2.caption("ℹ️ 매일 11:00 HST 자동 갱신 (GitHub push 후 cloud auto-reload)")
+        last_update = "캐시 생성 후 미갱신"
+    st.caption(f"📅 마지막 갱신: {last_update}")
 
     @st.cache_data
     def _load_full():
-        trades = pd.read_csv(FULL / "trades.csv")
+        trades = pd.read_csv(YB_FULL / "trades.csv")
         trades["date"] = pd.to_datetime(trades["date"])
-        equity = pd.read_csv(FULL / "equity.csv", index_col=0, parse_dates=True)
-        alloc = pd.read_csv(FULL / "alloc.csv", index_col=0, parse_dates=True)
-        bench = pd.read_csv(FULL / "bench.csv", index_col=0, parse_dates=True)
+        equity = pd.read_csv(YB_FULL / "equity.csv", index_col=0, parse_dates=True)
+        alloc = pd.read_csv(YB_FULL / "alloc.csv", index_col=0, parse_dates=True)
+        bench = pd.read_csv(YB_FULL / "bench.csv", index_col=0, parse_dates=True)
         return trades, equity, alloc, bench
 
     trades_all, equity_all, alloc_all, bench_all = _load_full()
@@ -1058,9 +1165,117 @@ with tabs[5]:
 
 
 # ───────────────────────────────────────────────────────────
-# TAB 7: BUBE Live (Tier 2 GOLD_ESCAPE bm=90)
+# TAB 7: Slot Rotation (BUBE × N분할 × H일 hold 그리드)
 # ───────────────────────────────────────────────────────────
 with tabs[6]:
+    st.subheader("🔀 Slot Rotation — BUBE × N분할 × H일 hold 그리드 (2026-05-25)")
+    st.caption("BUBE에 자금을 N등분 + 매일 1차수씩 rotation 진입 + H일 후 강제 청산. MDD 분산 시도. position-level 백테 (SOXL OHLC + per-slot stop)")
+
+    sr_summary_path = ROOT / "slot_rotation" / "summary_pos.json"
+    if sr_summary_path.exists():
+        sr = load_json(sr_summary_path)
+
+        # Baseline + Top picks
+        baseline = sr.get("baseline", {})
+        best_cal = sr.get("grid_best_calmar", {})
+        best_cagr = sr.get("grid_best_cagr", {})
+
+        st.markdown("### 🏁 Headline")
+        b1, b2, b3 = st.columns(3)
+        b1.markdown("**BASELINE (BUBE 단일)**")
+        b1.metric("CAGR", f"{baseline.get('cagr', 0)*100:+.1f}%")
+        b1.metric("MDD", f"{baseline.get('mdd', 0)*100:+.1f}%")
+        b1.metric("Calmar", f"{baseline.get('calmar', 0):.2f}")
+
+        b2.markdown(f"**🏆 Best Calmar (N={int(best_cal.get('n_slots', 0))}, H={int(best_cal.get('hold_days', 0))}d)**")
+        b2.metric("CAGR", f"{best_cal.get('cagr', 0)*100:+.1f}%",
+                  f"{(best_cal.get('cagr', 0) - baseline.get('cagr', 0))*100:+.1f}p")
+        b2.metric("MDD", f"{best_cal.get('mdd', 0)*100:+.1f}%",
+                  f"{(best_cal.get('mdd', 0) - baseline.get('mdd', 0))*100:+.1f}p")
+        b2.metric("Calmar", f"{best_cal.get('calmar', 0):.2f}",
+                  f"+{best_cal.get('calmar', 0) - baseline.get('calmar', 0):.2f}")
+
+        b3.markdown(f"**🚀 Best CAGR (N={int(best_cagr.get('n_slots', 0))}, H={int(best_cagr.get('hold_days', 0))}d)**")
+        b3.metric("CAGR", f"{best_cagr.get('cagr', 0)*100:+.1f}%",
+                  f"{(best_cagr.get('cagr', 0) - baseline.get('cagr', 0))*100:+.1f}p")
+        b3.metric("MDD", f"{best_cagr.get('mdd', 0)*100:+.1f}%",
+                  f"{(best_cagr.get('mdd', 0) - baseline.get('mdd', 0))*100:+.1f}p")
+        b3.metric("Calmar", f"{best_cagr.get('calmar', 0):.2f}",
+                  f"+{best_cagr.get('calmar', 0) - baseline.get('calmar', 0):.2f}")
+
+        st.info(
+            "**핵심**: N=5~7 / H=7~14일이 sweet spot — MDD 11pp 줄이면서 CAGR도 살짝 개선 (Calmar 2.46 → 3.5+). "
+            "N>>H면 자금 idle로 CAGR 망함 (N30_H7 = +24%). H=30+이면 regime 늦게 따라가 BULL run 길게 탐."
+        )
+
+        # Grid heatmap
+        st.markdown("### 📊 N × H 그리드 (Calmar by combo)")
+        grid_path = ROOT / "slot_rotation" / "grid_n_h_pos_lb08.csv"
+        if grid_path.exists():
+            grid = pd.read_csv(grid_path)
+            pivot_cal = grid.pivot(index="n_slots", columns="hold_days", values="calmar").round(2)
+            pivot_cagr = grid.pivot(index="n_slots", columns="hold_days", values="cagr").round(3)
+            pivot_mdd = grid.pivot(index="n_slots", columns="hold_days", values="mdd").round(3)
+
+            col_l, col_r = st.columns(2)
+            with col_l:
+                st.markdown("**Calmar (heatmap)**")
+                st.dataframe(pivot_cal.style.background_gradient(cmap="RdYlGn", axis=None),
+                             use_container_width=True)
+            with col_r:
+                st.markdown("**MDD (heatmap, 빨강일수록 깊음)**")
+                st.dataframe(pivot_mdd.style.background_gradient(cmap="RdYlGn_r", axis=None),
+                             use_container_width=True)
+            with st.expander("CAGR heatmap"):
+                st.dataframe(pivot_cagr.style.background_gradient(cmap="RdYlGn", axis=None),
+                             use_container_width=True)
+
+            # Top 10 by Calmar
+            st.markdown("### 🥇 Top 10 by Calmar")
+            top10 = grid.nlargest(10, "calmar")[["n_slots", "hold_days", "cagr", "mdd", "calmar", "sharpe", "final"]].copy()
+            top10["cagr"] = top10["cagr"].apply(fmt_pct)
+            top10["mdd"] = top10["mdd"].apply(fmt_pct)
+            top10["calmar"] = top10["calmar"].round(2)
+            top10["sharpe"] = top10["sharpe"].round(2)
+            top10["final"] = top10["final"].apply(lambda x: f"${x/1e6:.2f}M")
+            top10.columns = ["N slots", "Hold days", "CAGR", "MDD", "Calmar", "Sharpe", "Final ($100K → )"]
+            st.dataframe(top10, use_container_width=True, hide_index=True)
+
+        # Per-slot LB stop sweep
+        sweep = sr.get("per_slot_stop_sweep", [])
+        if sweep:
+            st.markdown("### 🛑 LB(롱변기) per-slot stop sweep")
+            st.caption("각 슬롯이 자체 -X% 손절을 독립 트리거. -10~-12% 사이가 sweet spot.")
+            sw_df = pd.DataFrame(sweep)
+            sw_df["cagr"] = sw_df["cagr"].apply(fmt_pct)
+            sw_df["mdd"] = sw_df["mdd"].apply(fmt_pct)
+            sw_df["calmar"] = sw_df["calmar"].round(2)
+            sw_df["sharpe"] = sw_df["sharpe"].round(2)
+            sw_df["final"] = sw_df["final"].apply(lambda x: f"${x/1e6:.2f}M")
+            sw_df.columns = ["LB stop", "CAGR", "MDD", "Calmar", "Sharpe", "Vol", "Final ($100K → )"]
+            st.dataframe(sw_df, use_container_width=True, hide_index=True)
+            st.info("⚠️ stop **off 또는 -20%** = CAGR 130%+ but MDD -37% (BUBE보다 깊음). -10~-12% = Calmar 3.7+ sweet spot.")
+
+        # Plot if exists
+        plot_path = ROOT / "slot_rotation" / "slot_rotation_plot.png"
+        if plot_path.exists():
+            with st.expander("📈 slot_rotation_plot.png (초기 returns-stream overlay grid)"):
+                st.image(str(plot_path), use_container_width=True)
+
+        st.markdown("---")
+        st.warning(
+            "⚠️ **Caveat**: 슬롯 rotation은 paper cloud 환경(단일 Alpaca 계정 + 7+ 슬롯 stagger)에서 state 관리 복잡. "
+            "IBKR 실거래 환경이 더 적합. 현 산출물은 position-level 백테로 BUBE 단일 대비 sweet spot 영역 확인. "
+            "메모리: `project_slot_rotation.md`."
+        )
+    else:
+        st.warning(f"slot_rotation/summary_pos.json 없음 — {sr_summary_path}")
+
+
+# ───────────────────────────────────────────────────────────
+# TAB 8: BUBE Live (Tier 2 GOLD_ESCAPE bm=90)
+# ───────────────────────────────────────────────────────────
+with tabs[7]:
     st.subheader("💰 BUBE Trader — Alpaca Paper (T2 GOLD_ESCAPE bm=90)")
     st.caption("2026-05-24 통합 봇. GitHub Actions × cron-job.org 자동 운영. 04:00 HST 데이터 60초 캐시.")
 
