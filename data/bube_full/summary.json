@@ -1,17 +1,17 @@
 {
   "spec": "BUBE Tier 2 GOLD_ESCAPE bm=90",
-  "period": "2018-06-04 ¡æ 2026-05-21",
-  "years": 7.96,
+  "period": "2010-05-25 ¡æ 2026-05-21",
+  "years": 15.99,
   "seed": 100000.0,
-  "final_equity": 36785463.00457849,
-  "total_return_pct": 36685.46,
-  "cagr_pct": 110.02,
+  "final_equity": 1923056836.799015,
+  "total_return_pct": 1922956.84,
+  "cagr_pct": 85.32,
   "mdd_pct": -45.92,
-  "calmar": 2.4,
-  "n_trades": 2762,
-  "n_days": 2003,
+  "calmar": 1.86,
+  "n_trades": 5203,
+  "n_days": 4023,
   "strategy_usage": {
-    "longbyungi": 1847,
-    "yangbyungi": 915
+    "longbyungi": 3569,
+    "yangbyungi": 1634
   }
 }

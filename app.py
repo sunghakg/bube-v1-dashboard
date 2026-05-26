@@ -7,7 +7,7 @@ BUBE Trader — Streamlit 대시보드 (Tier 2 GOLD_ESCAPE bm=90)
 
 탭 구성:
 1. 📊 Overview — 매매법 spec
-2. 📋 거래 내역 — 8년 분봉 백테 거래 로그
+2. 📋 거래 내역 — BUBE 16년 일봉 + 양변기 v5 8년 분봉 거래 로그
 3. 📈 Stress Tests — 5+2 폭락 사이클
 4. 🎲 Bootstrap — 5,000 paths 신뢰구간
 5. 📅 Year-by-Year — 16년 long-horizon
@@ -145,7 +145,7 @@ alloc by QQQ weekly RSI: ≥60 100% / 45-60 70% / <45 30% watch
 # TAB 2: 기간별 거래 내역 (NEW)
 # ───────────────────────────────────────────────────────────
 with tabs[1]:
-    st.subheader("📋 BUBE 전체 rotation 8년 거래 내역 (롱변기 + 양변기 + 황금변기)")
+    st.subheader("📋 BUBE 전체 rotation 16년 거래 내역 (롱변기 + 양변기 + 황금변기)")
     st.caption("ℹ️ Tier 2 GOLD_ESCAPE bm=90 mapping. yfinance daily OHLC. multi_strategy_paper.simulate_day 엔진 + BUBE T2 mapping 어댑터.")
 
     # ── 사용자 정의 시작 자본 — 이 페이지의 모든 $ 값이 이 시드 기준으로 비례 환산됨 ──
@@ -203,7 +203,7 @@ with tabs[1]:
             st.caption(f"🔄 Sub-strategy trade events: {usage_str}")
             if "goldenbyungi" not in usage:
                 st.info(
-                    "ℹ️ 8년 표본에서 **GOLD_ESCAPE 미발동** (BEAR streak > 90일이 발생 안 함). "
+                    "ℹ️ 16년 표본에서 **GOLD_ESCAPE 미발동** (BEAR streak > 90일이 발생 안 함). "
                     "닷컴급 super-bear (31개월 BEAR)에서만 발동되는 escape valve — V_bear_cap dotcom OOS 검증에서 +9.8%p alpha 입증."
                 )
 
