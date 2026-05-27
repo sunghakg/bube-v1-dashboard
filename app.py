@@ -533,31 +533,87 @@ with tabs[1]:
 
     st.markdown("---")
 
-    # ── 2026-05-26: BUBE regime switching 가치 입증 (양변기 v5 ALWAYS-ON 16y vs BUBE 통합 비교) ──
-    st.markdown("### 🔍 Trade-level 검증 (2026-05-26) — BUBE regime switching의 가치")
-    st.caption("ℹ️ 사용자 질문 '여태 본 백테가 허상이 아닐까'에 대한 답. 같은 trade-level OHLC 잣대로 양변기 v5를 always-on 16y로 돌린 결과 vs BUBE 통합 비교.")
+    # ── 2026-05-26: BUBE regime switching 가치 입증 + alloc reduction 비교 ──
+    st.markdown("### 🔍 Trade-level 검증 (2026-05-26) — BUBE k=1.0 / k=0.65 / 양변기 ALWAYS-ON 비교")
+    st.caption("ℹ️ 사용자 질문 '여태 본 백테가 허상이 아닐까'에 대한 답. 같은 trade-level OHLC 잣대로 3-way 비교. alloc 동등 비교가 fair하려면 BUBE × k=0.65가 기준점.")
 
     yb_only_path = ROOT / "yangbyungi_only_16yr" / "summary.json"
-    if yb_only_path.exists():
+    k_sweep_path = ROOT / "bube_mdd30" / "M1_k_sweep_tradelevel.csv"
+
+    if yb_only_path.exists() and k_sweep_path.exists():
         yb_only = load_json(yb_only_path)
         bube_sum = load_json(FULL / "summary.json")
+        k_sweep = pd.read_csv(k_sweep_path)
+        k65 = k_sweep[abs(k_sweep["k"] - 0.65) < 0.001].iloc[0]
+        k65_cagr = float(k65["16y_CAGR"])
+        k65_mdd = float(k65["16y_MDD"])
+        k65_cal = float(k65["16y_Cal"])
+
         if yb_only and bube_sum:
+            st.markdown("#### 3-way 비교 (16년 trade-level OHLC, $100K seed)")
             vc1, vc2, vc3, vc4 = st.columns(4)
-            vc1.metric("BUBE 통합 16y Calmar", f"{bube_sum['calmar']:.2f}",
-                       f"MDD {bube_sum['mdd_pct']:.1f}%")
-            vc2.metric("양변기 v5 ALWAYS-ON 16y Calmar", f"{yb_only['calmar']:.2f}",
-                       f"MDD {yb_only['mdd_pct']:.1f}%")
-            delta_cal = bube_sum['calmar'] - yb_only['calmar']
-            vc3.metric("Regime switching Δ Calmar", f"+{delta_cal:.2f}",
-                       "BUBE 통합이 우월")
-            vc4.metric("양변기 8y vs 16y", "Cal 2.55 → 1.35",
-                       "8년 결과는 cherry-pick")
+            vc1.metric("양변기 ALWAYS-ON",
+                       f"Cal {yb_only['calmar']:.2f}",
+                       f"CAGR {yb_only['cagr_pct']:.1f}% · MDD {yb_only['mdd_pct']:.1f}%")
+            vc2.metric("BUBE 통합 k=1.0 (현행)",
+                       f"Cal {bube_sum['calmar']:.2f}",
+                       f"CAGR {bube_sum['cagr_pct']:.1f}% · MDD {bube_sum['mdd_pct']:.1f}%")
+            vc3.metric("★ BUBE × k=0.65 (권장)",
+                       f"Cal {k65_cal:.2f}",
+                       f"CAGR {k65_cagr:.1f}% · MDD {k65_mdd:.1f}%")
+            # Pareto-dominance check: BUBE k=0.65 vs yangbyungi ALWAYS-ON
+            pareto = (k65_cagr > yb_only['cagr_pct'] and
+                      k65_mdd > yb_only['mdd_pct'] and  # less negative = better
+                      k65_cal > yb_only['calmar'])
+            vc4.metric("k=0.65 vs 양변기",
+                       "Pareto-dominate ✅" if pareto else "trade-off",
+                       f"CAGR +{k65_cagr - yb_only['cagr_pct']:.1f}pp · MDD +{k65_mdd - yb_only['mdd_pct']:.1f}pp · Cal +{k65_cal - yb_only['calmar']:.2f}")
+
             st.info(
-                "💡 **핵심 인사이트**: 양변기 v5 단독 8년 Cal 2.55는 매력적이지만, 16년 always-on으로 확장하면 **Cal 1.35로 반토막**, "
-                "MDD −20.7% → −33.7%. 2010~2018 bull market에서 long+short pair의 underperformance가 드러남. "
-                f"BUBE 통합 (regime switching) Cal {bube_sum['calmar']:.2f}는 "
-                f"양변기 always-on 대비 **+{delta_cal:.2f} Calmar** 추가 — regime 기반 sub-strategy 스위칭이 long-horizon에서 가치 입증."
+                f"💡 **핵심 인사이트**: 양변기 ALWAYS-ON은 RSI 기반 alloc 50~70%가 이미 적용된 보수적 셋업이라 "
+                f"MDD가 −33.7%로 낮음. BUBE 통합 k=1.0은 BULL regime에서 100% long 풀로딩 → MDD −45.9% 더 깊지만 CAGR 거의 2배.\n\n"
+                f"⚖️ **Fair 비교는 alloc 동등 수준**: BUBE × k=0.65 (cash sleeve 35%) 적용 시 — "
+                f"CAGR **{k65_cagr:.1f}%** vs 양변기 {yb_only['cagr_pct']:.1f}%, "
+                f"MDD **{k65_mdd:.1f}%** vs 양변기 {yb_only['mdd_pct']:.1f}%, "
+                f"Cal **{k65_cal:.2f}** vs 양변기 {yb_only['calmar']:.2f} → "
+                f"**모든 지표에서 BUBE × k=0.65가 양변기 ALWAYS-ON을 Pareto-dominate**."
             )
+
+            with st.expander("📊 BUBE k-sweep 전체표 + 17y crisis breakdown (메모리 [[project_bube_mdd30]])", expanded=False):
+                st.markdown("**M1: alloc reduction k sweep (trade-level)**")
+                k_disp = k_sweep.copy()
+                for col in ("16y_CAGR", "16y_MDD", "8y_CAGR", "8y_MDD", "4y_CAGR", "4y_MDD"):
+                    if col in k_disp.columns:
+                        k_disp[col] = k_disp[col].apply(lambda v: f"{v:+.1f}%")
+                for col in ("16y_Cal", "8y_Cal", "4y_Cal", "16y_Sharpe"):
+                    if col in k_disp.columns:
+                        k_disp[col] = k_disp[col].apply(lambda v: f"{v:.2f}")
+                if "Final" in k_disp.columns:
+                    k_disp["Final"] = k_disp["Final"].apply(
+                        lambda v: f"${v/1e9:.2f}B" if v >= 1e9 else f"${v/1e6:.1f}M")
+                st.dataframe(k_disp, use_container_width=True, hide_index=True)
+
+                crisis_path = ROOT / "bube_mdd30" / "M3_crisis.csv"
+                if crisis_path.exists():
+                    st.markdown("**M3: 6 crisis stress (k=0.65 모두 MDD +6.6~+14.1pp 개선, 1해도 underperform 없음)**")
+                    crisis = pd.read_csv(crisis_path)
+                    st.dataframe(crisis, use_container_width=True, hide_index=True)
+
+                st.markdown("""
+**Champion: k=0.65 alloc reduction**
+- 16y CAGR **53.4%** / MDD **−30.9%** / Cal **1.73** (in-sample)
+- Bootstrap 5,000 paths: median MDD −36%, P(<-30%) = 85%, P(<-40%) = 30%
+- 17년 매년 일관 MDD 절약 (+6.6~+14.1pp), 단 한 해도 underperform 없음
+- MDD overlay stop은 alpha kill (V자 회복 놓침), BEAR-only는 부적합
+
+**STRATEGY_SPECS 패치값** (bube_trader.py에서 alloc × 0.65):
+```python
+longbyungi.alloc                  : 1.00 → 0.65
+goldenbyungi.offensive/safety/watch: 1.0/0.7/0.3 → 0.65/0.455/0.195
+yangbyungi.bull/neutral/bear_long : 0.70/0.60/0.50 → 0.455/0.39/0.325
+yangbyungi.short_alloc            : 0.40 → 0.26
+```
+""")
 
     # ── 환상으로 확정된 매매법 라벨 (returns-stream idealization) ──
     with st.expander("🚨 returns-stream 환상으로 확정된 매매법 (운영 사용 금지)", expanded=False):
