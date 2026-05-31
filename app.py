@@ -16,8 +16,8 @@ Bootstrap 5,000 paths: p50 Cal 2.16 / MDD -34.9% / P(MDD<-30%) = 82.0%
 5. 📅 Year-by-Year — 17년 BASE vs CHAMP 연도별
 6. 🔄 Multi-window OOS — 1y/2y/3y/4y/5y/8y/10y/15y/16y rolling
 7. 💰 BUBE Live — Alpaca paper 실시간 + regime + active sub-strategy
-8. 🆚 V2_FINAL 비교 — V1 그대로 운영, V2 백테 성과를 비교만 표시
-   (V2_FINAL = V1 × conditional VVIX × NDX/SPY RS sizing — paper 봇 미적용)
+8. 🆚 V2_FINAL 비교 — 기본 비활성 (SHOW_V2=False). lookahead 제거 재검증(2026-05-28)에서
+   V2가 V1보다 열위(LAF Cal 1.49 < 1.62)로 판명되어 운영 대시보드에서 숨김. 연구 데이터·스크립트는 보존.
 """
 from __future__ import annotations
 import json
@@ -30,6 +30,13 @@ import streamlit as st
 ROOT = Path(__file__).parent / "data"
 CHAMP = ROOT / "champ_nomargin"
 V2DIR = ROOT / "v2_final"
+
+# ── V2_FINAL 표시 토글 ──────────────────────────────────────
+# V2_FINAL은 연구 옵션으로 보존하되 운영 대시보드에서는 숨긴다.
+# 근거: lookahead-bias 제거 재검증(2026-05-28)에서 LAF Calmar V2 1.49 < V1 1.62,
+#       VVIX shuffle z=-0.93 → V2 추가 알파는 환상으로 판명. paper 봇은 원래부터 V1 전용.
+# 다시 켜려면 True: 상단 비교 배너 + Tab 8 + equity V2 곡선 + 연도별 V2 컬럼이 복원됨.
+SHOW_V2 = False
 st.set_page_config(page_title="BUBE V1 CHAMP_NOMARGIN Dashboard", layout="wide", page_icon="🏆")
 
 # Alpaca credentials from Streamlit secrets (cloud) or env (local)
@@ -157,7 +164,7 @@ if last_updated or data_end:
 
 # V2_FINAL 비교 헤드라인 (paper 봇 미적용, 백테 비교만)
 v2_summary = load_json(V2DIR / "summary.json")
-if v2_summary is not None:
+if SHOW_V2 and v2_summary is not None:
     H_V2 = v2_summary["V2_FINAL"]
     st.markdown(f"""
 <div style="background:#0e1a2e;border-left:4px solid #f59e0b;padding:10px 16px;border-radius:6px;margin:8px 0 4px;color:#e5e7eb">
@@ -173,9 +180,14 @@ if v2_summary is not None:
 
 st.markdown("---")
 
-tabs = st.tabs(["📊 Overview", "📋 거래 내역", "📈 Stress Tests", "🎲 Bootstrap",
-                "📅 Year-by-Year", "🔄 Multi-window OOS", "💰 BUBE Live",
-                "🆚 V2_FINAL 비교", "📔 최근 1달 매매일지"])
+_tab_labels = ["📊 Overview", "📋 거래 내역", "📈 Stress Tests", "🎲 Bootstrap",
+               "📅 Year-by-Year", "🔄 Multi-window OOS", "💰 BUBE Live"]
+if SHOW_V2:
+    _tab_labels.append("🆚 V2_FINAL 비교")
+_tab_labels.append("📔 최근 1달 매매일지")
+tabs = st.tabs(_tab_labels)
+# V2 탭 유무에 따라 매매일지 탭 인덱스 이동 (V2 숨기면 7, 보이면 8)
+IDX_JOURNAL = 8 if SHOW_V2 else 7
 
 # ───────────────────────────────────────────────────────────
 # TAB 1: Overview
@@ -314,7 +326,7 @@ with tabs[1]:
 
     eq_all = _load_eq(_mtime(CHAMP / "equity_curves.csv"))
     daily_all = _load_daily(_mtime(CHAMP / "daily.csv"))
-    eq_v2_all = _load_v2_for_overlay(_mtime(V2DIR / "equity_paths.csv"))
+    eq_v2_all = _load_v2_for_overlay(_mtime(V2DIR / "equity_paths.csv")) if SHOW_V2 else None
 
     # ── Date range picker ──
     bt_min_d = eq_all.index.min().date()
@@ -420,7 +432,8 @@ with tabs[1]:
                        f"{as_.iloc[0]:.0f}% of period" if len(as_) else "—")
 
         # ── Equity curve ──
-        st.markdown(f"#### 📈 Equity Curve — ${user_seed:,.0f} 시드 기준 (CHAMP vs BASE vs V2_FINAL)")
+        _eq_title = "CHAMP vs BASE vs V2_FINAL" if SHOW_V2 else "CHAMP vs BASE"
+        st.markdown(f"#### 📈 Equity Curve — ${user_seed:,.0f} 시드 기준 ({_eq_title})")
         chart_dict = {
             "V1 CHAMP_NOMARGIN ($)": eq_user_champ.values,
             "BASE k=0.65 ($)": eq_user_base.values,
@@ -715,7 +728,7 @@ with tabs[4]:
         # Load V2 yearly for column overlay (daily-updated source)
         v2_yearly = None
         v2_yp = V2DIR / "yearly_breakdown.csv"
-        if v2_yp.exists():
+        if SHOW_V2 and v2_yp.exists():
             v2_yearly = pd.read_csv(v2_yp).set_index("year")
 
         # Build display
@@ -737,7 +750,10 @@ with tabs[4]:
                 "CHAMP Sharpe": f"{r['CHAMP_sharpe']:.2f}",
                 "CHAMP End $": _money(r["CHAMP_end_$"]),
             })
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        df_year = pd.DataFrame(rows)
+        if not SHOW_V2:
+            df_year = df_year.drop(columns=["V2 Ret", "V2 MDD"], errors="ignore")
+        st.dataframe(df_year, use_container_width=True, hide_index=True)
         if v2_yearly is not None:
             st.caption("ℹ️ V2 Ret/MDD 컬럼은 data/v2_final/yearly_breakdown.csv (daily 자동 갱신).")
 
@@ -839,7 +855,7 @@ with tabs[5]:
 with tabs[6]:
     st.subheader("💰 BUBE V1 CHAMP_NOMARGIN — Alpaca Paper")
     st.caption("bube_trader.py 운영 봇. VIX dynamic-k overlay가 매 진입 시 base alloc에 k_today를 곱하고 1.0으로 cap.")
-    st.info("ℹ️ **운영 봇 = V1 CHAMP_NOMARGIN 그대로**. V2_FINAL은 백테 비교용으로만 8번 탭에 표시 (bube_trader.py 미변경).")
+    st.info("ℹ️ **운영 봇 = V1 CHAMP_NOMARGIN 그대로** (bube_trader.py 미변경).")
 
     # ── Section A: Spec card ──
     st.markdown("""
@@ -1117,9 +1133,9 @@ with tabs[6]:
 
 
 # ───────────────────────────────────────────────────────────
-# TAB 8: V2_FINAL 비교 (paper 봇 미적용, 백테 비교만)
+# TAB 8: V2_FINAL 비교 (SHOW_V2=False면 탭 미생성·미호출 — 연구 옵션으로만 보존)
 # ───────────────────────────────────────────────────────────
-with tabs[7]:
+def _render_v2_tab():
     st.subheader("🆚 V2_FINAL 백테 비교")
     st.caption("운영 봇은 V1 CHAMP_NOMARGIN 그대로 (bube_trader.py 미변경). "
                "여기는 V2_FINAL 백테 성과를 같이 표시만 — paper 적용 없음.")
@@ -1379,10 +1395,16 @@ with tabs[7]:
         )
 
 
+# V2 탭은 SHOW_V2가 True일 때만 렌더 (기본 False = 운영 대시보드에서 숨김)
+if SHOW_V2:
+    with tabs[7]:
+        _render_v2_tab()
+
+
 # ───────────────────────────────────────────────────────────
 # TAB 9: 최근 1달 매매일지 (signal_diagnostics + trade_log_enriched)
 # ───────────────────────────────────────────────────────────
-with tabs[8]:
+with tabs[IDX_JOURNAL]:
     st.subheader("📔 최근 1달 매매일지 — 일별 신호값 + 산식 검증")
     st.caption("data/v2_final/signal_diagnostics.csv (daily 자동 갱신). 각 거래일에 백테가 계산한 모든 신호값과 "
                "k_today 도출 과정을 표시. 사용자가 직접 산식 검증 가능.")
