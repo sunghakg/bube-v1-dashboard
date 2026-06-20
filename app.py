@@ -117,11 +117,11 @@ col1, col2, col3, col4 = st.columns(4)
 col1.metric("16년 Calmar", f"{H_CHAMP['Calmar']:.2f}",
             f"BASE {H_BASE['Calmar']:.2f} · +{H_CHAMP['Calmar']-H_BASE['Calmar']:.2f}",
             help="Calmar = CAGR ÷ |MDD|. 낙폭 대비 수익 효율성. 1.0 이상 양호, 2.0 이상 우수. BASE = VIX 조정 없이 고정 비중 운영 시.")
-col2.metric("16년 CAGR (연복리)", f"{H_CHAMP['CAGR']:.1f}%",
-            f"BASE {H_BASE['CAGR']:.1f}% · +{H_CHAMP['CAGR']-H_BASE['CAGR']:.1f}pp",
+col2.metric("16년 CAGR (연복리)", f"{H_CHAMP['CAGR']:.2f}%",
+            f"BASE {H_BASE['CAGR']:.2f}% · +{H_CHAMP['CAGR']-H_BASE['CAGR']:.2f}pp",
             help="CAGR = 연평균 복리 수익률. 16년 전체를 복리로 환산했을 때의 연간 평균 수익률.")
-col3.metric("16년 MDD (최대낙폭)", f"{H_CHAMP['MDD']:.1f}%",
-            f"BASE {H_BASE['MDD']:.1f}% · {H_CHAMP['MDD']-H_BASE['MDD']:.1f}pp 개선",
+col3.metric("16년 MDD (최대낙폭)", f"{H_CHAMP['MDD']:.2f}%",
+            f"BASE {H_BASE['MDD']:.2f}% · {H_CHAMP['MDD']-H_BASE['MDD']:.2f}pp 개선",
             help="MDD = Maximum Drawdown. 고점 대비 최대 하락폭. 절댓값이 작을수록 좋음.")
 col4.metric("$10만 → 최종 (16년)", _money(H_CHAMP['Final_mult'] * 100_000),
             f"×{H_CHAMP['Final_mult']/H_BASE['Final_mult']:.1f} BASE",
@@ -175,22 +175,22 @@ st.markdown(f"""
     <tr style="border-bottom:1px solid #1e293b">
       <td style="padding:5px 8px;color:#e2e8f0;font-weight:600">16년 (전체)</td>
       <td style="padding:5px 12px;text-align:right;color:{_cal_color(_r16['Calmar'])};font-weight:700">{_r16['Calmar']:.2f}</td>
-      <td style="padding:5px 12px;text-align:right;color:#60a5fa">{_r16['CAGR']:+.1f}%</td>
-      <td style="padding:5px 12px;text-align:right;color:{_mdd_color(_r16['MDD'])}">{_r16['MDD']:.1f}%</td>
+      <td style="padding:5px 12px;text-align:right;color:#60a5fa">{_r16['CAGR']:+.2f}%</td>
+      <td style="padding:5px 12px;text-align:right;color:{_mdd_color(_r16['MDD'])}">{_r16['MDD']:.2f}%</td>
       <td style="padding:5px 12px;text-align:right;color:#e2e8f0">{_money(_r16['mult']*100_000)}</td>
     </tr>
     <tr style="border-bottom:1px solid #1e293b">
       <td style="padding:5px 8px;color:#e2e8f0;font-weight:600">10년 (롤링)</td>
       <td style="padding:5px 12px;text-align:right;color:{_cal_color(_r10['Calmar'])};font-weight:700">{_r10['Calmar']:.2f}</td>
-      <td style="padding:5px 12px;text-align:right;color:#60a5fa">{_r10['CAGR']:+.1f}%</td>
-      <td style="padding:5px 12px;text-align:right;color:{_mdd_color(_r10['MDD'])}">{_r10['MDD']:.1f}%</td>
+      <td style="padding:5px 12px;text-align:right;color:#60a5fa">{_r10['CAGR']:+.2f}%</td>
+      <td style="padding:5px 12px;text-align:right;color:{_mdd_color(_r10['MDD'])}">{_r10['MDD']:.2f}%</td>
       <td style="padding:5px 12px;text-align:right;color:#e2e8f0">{_money(_r10['mult']*100_000)}</td>
     </tr>
     <tr>
       <td style="padding:5px 8px;color:#e2e8f0;font-weight:600"> 5년 (롤링)</td>
       <td style="padding:5px 12px;text-align:right;color:{_cal_color(_r5['Calmar'])};font-weight:700">{_r5['Calmar']:.2f}</td>
-      <td style="padding:5px 12px;text-align:right;color:#60a5fa">{_r5['CAGR']:+.1f}%</td>
-      <td style="padding:5px 12px;text-align:right;color:{_mdd_color(_r5['MDD'])}">{_r5['MDD']:.1f}%</td>
+      <td style="padding:5px 12px;text-align:right;color:#60a5fa">{_r5['CAGR']:+.2f}%</td>
+      <td style="padding:5px 12px;text-align:right;color:{_mdd_color(_r5['MDD'])}">{_r5['MDD']:.2f}%</td>
       <td style="padding:5px 12px;text-align:right;color:#e2e8f0">{_money(_r5['mult']*100_000)}</td>
     </tr>
   </tbody>
@@ -245,8 +245,8 @@ if SHOW_V2 and v2_summary is not None:
   <span style="color:#f59e0b;font-weight:600">🆚 V2_FINAL 백테 비교 (paper 봇 미적용 — 운영은 V1 그대로)</span>
   &nbsp;·&nbsp;
   16y Cal <b>{H_V2['Calmar']:.2f}</b> (V1 {H_CHAMP['Calmar']:.2f}) &nbsp;·&nbsp;
-  CAGR <b>{H_V2['CAGR_pct']:.1f}%</b> (V1 {H_CHAMP['CAGR']:.1f}%) &nbsp;·&nbsp;
-  MDD <b>{H_V2['MDD_pct']:.1f}%</b> (V1 {H_CHAMP['MDD']:.1f}%) &nbsp;·&nbsp;
+  CAGR <b>{H_V2['CAGR_pct']:.2f}%</b> (V1 {H_CHAMP['CAGR']:.2f}%) &nbsp;·&nbsp;
+  MDD <b>{H_V2['MDD_pct']:.2f}%</b> (V1 {H_CHAMP['MDD']:.2f}%) &nbsp;·&nbsp;
   Final <b>{_money(H_V2['final_multiple']*100_000)}</b>
   <span style="opacity:0.7;font-size:0.85em">&nbsp;— 자세히는 8번째 탭</span>
 </div>
@@ -279,8 +279,8 @@ with st.sidebar:
     st.caption("📊 16년 백테 핵심 지표")
     _sb1, _sb2 = st.columns(2)
     _sb1.metric("Calmar", f"{H_CHAMP['Calmar']:.2f}")
-    _sb2.metric("CAGR", f"{H_CHAMP['CAGR']:.1f}%")
-    _sb1.metric("MDD", f"{H_CHAMP['MDD']:.1f}%")
+    _sb2.metric("CAGR", f"{H_CHAMP['CAGR']:.2f}%")
+    _sb1.metric("MDD", f"{H_CHAMP['MDD']:.2f}%")
     _sb2.metric("$10K→", _money(H_CHAMP['Final_mult'] * 10_000))
     st.markdown("---")
     st.caption("매일 자동 갱신 (평일 11:15 HST)")
@@ -366,8 +366,8 @@ max_bear   = 90일 (GOLD_ESCAPE 트리거)
              f"p50 Cal {H_BOOT['cal_p50']:.2f}, p05 {H_BOOT['cal_p05']:.2f} 이상",
              "✅"),
             ("VIX shuffle test", "alpha 소실 → VIX-conditioning이 진짜 시그널 (random X)", "✅"),
-            ("MDD 분포", f"p50 {H_BOOT['mdd_p50']:.1f}%, P(MDD<-30%)={H_BOOT['p_mdd_worse_than_30']:.1f}%", "⚠️"),
-            ("CAGR 양수 확률", f"P(CAGR>0)={H_BOOT['p_cagr_positive']:.1f}%, P(CAGR>30%)={H_BOOT['p_cagr_above_30']:.1f}%", "✅"),
+            ("MDD 분포", f"p50 {H_BOOT['mdd_p50']:.2f}%, P(MDD<-30%)={H_BOOT['p_mdd_worse_than_30']:.2f}%", "⚠️"),
+            ("CAGR 양수 확률", f"P(CAGR>0)={H_BOOT['p_cagr_positive']:.2f}%, P(CAGR>30%)={H_BOOT['p_cagr_above_30']:.2f}%", "✅"),
             ("margin 사용", "alloc_cap 1.0 → 합법 cash sleeve, leverage 0%", "✅"),
             ("Final $", f"$100K → {_money(H_CHAMP['Final_mult']*100_000)} (×{H_CHAMP['Final_mult']/H_BASE['Final_mult']:.1f} BASE)", "✅"),
         ]
@@ -445,9 +445,9 @@ max_bear   = 90일 (GOLD_ESCAPE 트리거)
     _ret  = (_eq_slice["CHAMP_NOMARGIN"].iloc[-1] / _eq_slice["CHAMP_NOMARGIN"].iloc[0] - 1) * 100
 
     _sc1, _sc2, _sc3, _sc4 = st.columns(4)
-    _sc1.metric("구간 수익", f"{_ret:+.1f}%")
-    _sc2.metric("CAGR", f"{_cagr:+.1f}%")
-    _sc3.metric("MDD", f"{_mdd:.1f}%")
+    _sc1.metric("구간 수익", f"{_ret:+.2f}%")
+    _sc2.metric("CAGR", f"{_cagr:+.2f}%")
+    _sc3.metric("MDD", f"{_mdd:.2f}%")
     _sc4.metric("Calmar", f"{_cal:.2f}")
 
     st.markdown(f"### 📈 자산 성장 곡선 — $10만 시드 ({_sel_period})")
@@ -584,9 +584,9 @@ elif page == "📋 거래 내역":
         st.markdown(f"#### 📐 선택 기간 성과 — 시드 ${user_seed:,.0f}, {d_from} → {d_to} ({s_champ['days']} 거래일, {s_champ['years']:.2f}년)")
         st.markdown("**CHAMP_NOMARGIN (현 운영 후보)**")
         pc1, pc2, pc3, pc4 = st.columns(4)
-        pc1.metric("Final Equity", _money(s_champ["end"]), f"{s_champ['ret']*100:+,.1f}%")
-        pc2.metric("CAGR", f"{s_champ['cagr']*100:+.1f}%", f"BASE {s_base['cagr']*100:+.1f}%")
-        pc3.metric("MDD", f"{s_champ['mdd']*100:+.1f}%", f"BASE {s_base['mdd']*100:+.1f}%")
+        pc1.metric("Final Equity", _money(s_champ["end"]), f"{s_champ['ret']*100:+,.2f}%")
+        pc2.metric("CAGR", f"{s_champ['cagr']*100:+.2f}%", f"BASE {s_base['cagr']*100:+.2f}%")
+        pc3.metric("MDD", f"{s_champ['mdd']*100:+.2f}%", f"BASE {s_base['mdd']*100:+.2f}%")
         pc4.metric("Calmar", f"{s_champ['calmar']:.2f}" if s_champ['calmar'] != float("inf") else "∞",
                     f"BASE {s_base['calmar']:.2f}")
         pc5, pc6, pc7, pc8 = st.columns(4)
@@ -737,7 +737,7 @@ elif page == "📋 거래 내역":
     fc2.metric("Realized P&L", _money(realized))
     nonzero = tr_filt[tr_filt["pnl_scaled"] != 0]
     wr = (nonzero["pnl_scaled"] > 0).mean() * 100 if len(nonzero) else 0
-    fc3.metric("Win rate (non-zero pnl)", f"{wr:.1f}%")
+    fc3.metric("Win rate (non-zero pnl)", f"{wr:.2f}%")
     fc4.metric("기간",
                f"{tr_filt['date'].min().date()} → {tr_filt['date'].max().date()}"
                if len(tr_filt) else "—")
@@ -792,10 +792,10 @@ elif page == "📈 위기 방어력":
         cr = pd.read_csv(crisis_path)
         # Display columns
         disp = cr.copy()
-        disp["BASE_ret_%"] = disp["BASE_ret_%"].apply(lambda x: f"{x:+.1f}%")
-        disp["BASE_mdd_%"] = disp["BASE_mdd_%"].apply(lambda x: f"{x:+.1f}%")
-        disp["CHAMP_ret_%"] = disp["CHAMP_ret_%"].apply(lambda x: f"{x:+.1f}%")
-        disp["CHAMP_mdd_%"] = disp["CHAMP_mdd_%"].apply(lambda x: f"{x:+.1f}%")
+        disp["BASE_ret_%"] = disp["BASE_ret_%"].apply(lambda x: f"{x:+.2f}%")
+        disp["BASE_mdd_%"] = disp["BASE_mdd_%"].apply(lambda x: f"{x:+.2f}%")
+        disp["CHAMP_ret_%"] = disp["CHAMP_ret_%"].apply(lambda x: f"{x:+.2f}%")
+        disp["CHAMP_mdd_%"] = disp["CHAMP_mdd_%"].apply(lambda x: f"{x:+.2f}%")
         disp["Δ_ret_pp"] = disp["Δ_ret_pp"].apply(lambda x: f"{x:+.2f}pp")
         disp["Δ_mdd_pp"] = disp["Δ_mdd_pp"].apply(lambda x: f"{x:+.2f}pp")
         disp.columns = ["Crisis", "From", "To",
@@ -831,8 +831,8 @@ elif page == "📈 위기 방어력":
         if len(cov_rec) > 0:
             r = cov_rec.iloc[0]
             st.warning(
-                f"⚠️ **2020 Covid recovery**: BASE {r['BASE_ret_%']:+.1f}% vs CHAMP {r['CHAMP_ret_%']:+.1f}% "
-                f"({r['Δ_ret_pp']:+.1f}pp underperform) — VIX가 30~40 구간 머무를 때 scale<1로 풀로딩 못함 → "
+                f"⚠️ **2020 Covid recovery**: BASE {r['BASE_ret_%']:+.2f}% vs CHAMP {r['CHAMP_ret_%']:+.2f}% "
+                f"({r['Δ_ret_pp']:+.2f}pp underperform) — VIX가 30~40 구간 머무를 때 scale<1로 풀로딩 못함 → "
                 f"V-recovery upside 일부 놓침. **trade-off**: 위기 시작 MDD 보호 대가."
             )
     else:
@@ -850,16 +850,16 @@ elif page == "🎲 확률 분포":
 
     bc1, bc2, bc3 = st.columns(3)
     bc1.markdown("### CAGR (연복리 수익률) 분포")
-    bc1.metric("하위 5% (최악 케이스)", f"{b['cagr_p05']:.1f}%")
-    bc1.metric("중앙값 (기대 기준)", f"{b['cagr_p50']:.1f}%")
-    bc1.metric("상위 5% (최선 케이스)", f"{b['cagr_p95']:.1f}%")
-    bc1.caption(f"P(CAGR > 0) = **{b['p_cagr_positive']:.1f}%** · P(CAGR > 30%) = **{b['p_cagr_above_30']:.1f}%**")
+    bc1.metric("하위 5% (최악 케이스)", f"{b['cagr_p05']:.2f}%")
+    bc1.metric("중앙값 (기대 기준)", f"{b['cagr_p50']:.2f}%")
+    bc1.metric("상위 5% (최선 케이스)", f"{b['cagr_p95']:.2f}%")
+    bc1.caption(f"P(CAGR > 0) = **{b['p_cagr_positive']:.2f}%** · P(CAGR > 30%) = **{b['p_cagr_above_30']:.2f}%**")
 
     bc2.markdown("### MDD (최대낙폭) 분포")
-    bc2.metric("하위 5% (낙폭 최대)", f"{b['mdd_p05']:.1f}%")
-    bc2.metric("중앙값 (기대 기준)", f"{b['mdd_p50']:.1f}%")
-    bc2.metric("상위 5% (낙폭 최소)", f"{b['mdd_p95']:.1f}%")
-    bc2.caption(f"P(MDD < -30%) = **{b['p_mdd_worse_than_30']:.1f}%** · P(MDD < -40%) = **{b['p_mdd_worse_than_40']:.1f}%**")
+    bc2.metric("하위 5% (낙폭 최대)", f"{b['mdd_p05']:.2f}%")
+    bc2.metric("중앙값 (기대 기준)", f"{b['mdd_p50']:.2f}%")
+    bc2.metric("상위 5% (낙폭 최소)", f"{b['mdd_p95']:.2f}%")
+    bc2.caption(f"P(MDD < -30%) = **{b['p_mdd_worse_than_30']:.2f}%** · P(MDD < -40%) = **{b['p_mdd_worse_than_40']:.2f}%**")
 
     bc3.markdown("### Calmar (수익÷낙폭) 분포")
     bc3.metric("하위 5%", f"{b['cal_p05']:.2f}")
@@ -870,9 +870,9 @@ elif page == "🎲 확률 분포":
     st.markdown("---")
     st.markdown("### 핵심 해석 (운영 기대 범위)")
     st.info(
-        f"**진짜 운영 기대치**: bootstrap p50 = CAGR **{b['cagr_p50']:.1f}%** / MDD **{b['mdd_p50']:.1f}%** / Calmar **{b['cal_p50']:.2f}**. "
+        f"**진짜 운영 기대치**: bootstrap p50 = CAGR **{b['cagr_p50']:.2f}%** / MDD **{b['mdd_p50']:.2f}%** / Calmar **{b['cal_p50']:.2f}**. "
         f"단일 16년 path의 Cal 2.75는 약간 운 좋은 실현이며, 실제로는 **2.0 ~ 2.3 박스**가 base case.\n\n"
-        f"**MDD 꼬리 위험**: P(MDD<-30%) = {b['p_mdd_worse_than_30']:.1f}%, P(MDD<-40%) = {b['p_mdd_worse_than_40']:.1f}% — "
+        f"**MDD 꼬리 위험**: P(MDD<-30%) = {b['p_mdd_worse_than_30']:.2f}%, P(MDD<-40%) = {b['p_mdd_worse_than_40']:.2f}% — "
         f"미래 path가 -30% 넘어갈 확률 {b['p_mdd_worse_than_30']:.0f}%, -40% 확률 {b['p_mdd_worse_than_40']:.0f}% 정도. **mentally prepare**."
     )
 
@@ -911,13 +911,13 @@ elif page == "📅 연도별 성과":
             v2_mdd = v2_yearly.loc[yr_int, "V2_FINAL_mdd"] if (v2_yearly is not None and yr_int in v2_yearly.index) else None
             rows.append({
                 "Year": yr_int,
-                "BASE Ret": f"{r['BASE_ret_%']:+.1f}%",
-                "CHAMP Ret": f"{r['CHAMP_ret_%']:+.1f}%",
-                "V2 Ret": f"{v2_ret:+.1f}%" if v2_ret is not None and not pd.isna(v2_ret) else "—",
-                "Δ Ret (CHAMP-BASE)": f"{r['Δ_ret_pp']:+.1f}pp",
-                "BASE MDD": f"{r['BASE_mdd_%']:+.1f}%",
-                "CHAMP MDD": f"{r['CHAMP_mdd_%']:+.1f}%",
-                "V2 MDD": f"{v2_mdd:+.1f}%" if v2_mdd is not None and not pd.isna(v2_mdd) else "—",
+                "BASE Ret": f"{r['BASE_ret_%']:+.2f}%",
+                "CHAMP Ret": f"{r['CHAMP_ret_%']:+.2f}%",
+                "V2 Ret": f"{v2_ret:+.2f}%" if v2_ret is not None and not pd.isna(v2_ret) else "—",
+                "Δ Ret (CHAMP-BASE)": f"{r['Δ_ret_pp']:+.2f}pp",
+                "BASE MDD": f"{r['BASE_mdd_%']:+.2f}%",
+                "CHAMP MDD": f"{r['CHAMP_mdd_%']:+.2f}%",
+                "V2 MDD": f"{v2_mdd:+.2f}%" if v2_mdd is not None and not pd.isna(v2_mdd) else "—",
                 "Δ MDD (CHAMP-BASE)": f"{r['Δ_mdd_pp']:+.2f}pp",
                 "CHAMP Sharpe": f"{r['CHAMP_sharpe']:.2f}",
                 "CHAMP End $": _money(r["CHAMP_end_$"]),
@@ -944,7 +944,7 @@ elif page == "📅 연도별 성과":
         yc3.metric("CHAMP > BASE (MDD)", f"{wins_mdd}/{total}",
                    f"{wins_mdd/total*100:.0f}%")
         yc4.metric("평균 Δ Ret / Δ MDD",
-                   f"{avg_ret:+.1f}pp / {avg_mdd:+.2f}pp")
+                   f"{avg_ret:+.2f}pp / {avg_mdd:+.2f}pp")
 
         # Yearly equity chart
         st.markdown("### 📈 연말 자본 ($100K 시드 기준)")
@@ -961,7 +961,7 @@ elif page == "📅 연도별 성과":
         st.bar_chart(delta_chart, height=240)
 
         st.success(
-            f"💡 **17년 중 {wins_ret}년**에서 CHAMP > BASE (수익률 기준). 평균 +{avg_ret:.1f}pp/yr alpha. "
+            f"💡 **17년 중 {wins_ret}년**에서 CHAMP > BASE (수익률 기준). 평균 +{avg_ret:.2f}pp/yr alpha. "
             f"MDD는 {wins_mdd}/{total}년에서 CHAMP가 더 작음 — VIX dynamic-k overlay가 단순 운빨이 아닌 일관 효과."
         )
     else:
@@ -984,7 +984,7 @@ elif page == "🔄 기간별 안정성":
         for c in ("BASE_CAGR_%", "CHAMP_CAGR_%", "Δ_CAGR_pp",
                   "BASE_MDD_%", "CHAMP_MDD_%", "Δ_MDD_pp"):
             if c in disp.columns:
-                disp[c] = disp[c].apply(lambda x: f"{x:+.1f}%" if "pp" not in c else f"{x:+.1f}pp")
+                disp[c] = disp[c].apply(lambda x: f"{x:+.2f}%" if "pp" not in c else f"{x:+.2f}pp")
         for c in ("BASE_Sharpe", "CHAMP_Sharpe", "BASE_Calmar", "CHAMP_Calmar", "Δ_Calmar"):
             if c in disp.columns:
                 disp[c] = disp[c].apply(lambda x: f"{x:+.2f}" if "Δ" in c else f"{x:.2f}")
@@ -1355,10 +1355,10 @@ def _render_v2_tab():
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Calmar", f"{H_V2['Calmar']:.2f}",
                   f"V1 {H_V1['Calmar']:.2f} · +{H_V2['Calmar']-H_V1['Calmar']:.2f}")
-        m2.metric("CAGR", f"{H_V2['CAGR_pct']:.1f}%",
-                  f"V1 {H_V1['CAGR_pct']:.1f}% · {H_V2['CAGR_pct']-H_V1['CAGR_pct']:+.1f}pp")
-        m3.metric("MDD", f"{H_V2['MDD_pct']:.1f}%",
-                  f"V1 {H_V1['MDD_pct']:.1f}% · {H_V2['MDD_pct']-H_V1['MDD_pct']:+.1f}pp")
+        m2.metric("CAGR", f"{H_V2['CAGR_pct']:.2f}%",
+                  f"V1 {H_V1['CAGR_pct']:.2f}% · {H_V2['CAGR_pct']-H_V1['CAGR_pct']:+.2f}pp")
+        m3.metric("MDD", f"{H_V2['MDD_pct']:.2f}%",
+                  f"V1 {H_V1['MDD_pct']:.2f}% · {H_V2['MDD_pct']-H_V1['MDD_pct']:+.2f}pp")
         m4.metric("$100K → Final", _money(H_V2["final_multiple"] * 100_000),
                   f"V1 {_money(H_V1['final_multiple']*100_000)}")
 
@@ -1370,11 +1370,11 @@ def _render_v2_tab():
         m7.metric("Worst day", f"{H_V2['worst_day_pct']:.2f}%",
                   f"V1 {H_V1['worst_day_pct']:.2f}%")
         m8.metric("SOXL B&H Cal (참고)", f"{H_SOXL_BH['Calmar']:.2f}",
-                  f"MDD {H_SOXL_BH['MDD_pct']:.1f}%")
+                  f"MDD {H_SOXL_BH['MDD_pct']:.2f}%")
 
         st.markdown(
             f"💡 V2_FINAL의 핵심 효과: **CAGR은 V1과 사실상 동일** "
-            f"({H_V2['CAGR_pct']-H_V1['CAGR_pct']:+.1f}pp), **MDD를 {H_V1['MDD_pct']-H_V2['MDD_pct']:.1f}pp 개선** "
+            f"({H_V2['CAGR_pct']-H_V1['CAGR_pct']:+.2f}pp), **MDD를 {H_V1['MDD_pct']-H_V2['MDD_pct']:.2f}pp 개선** "
             f"→ Calmar +{H_V2['Calmar']-H_V1['Calmar']:.2f} 상승. "
             f"VVIX clamp {v2_summary['vvix_clamp_days_V2']}일, NDX throttle {v2_summary['ndx_throttle_days_V2']}일 발동."
         )
@@ -1430,14 +1430,14 @@ def _render_v2_tab():
         for _, r in yb.iterrows():
             rows.append({
                 "Year": int(r["year"]),
-                "V1 Ret": f"{r['V1_ret']:+.1f}%",
-                "V2 Ret": f"{r['V2_FINAL_ret']:+.1f}%",
-                "Δ Ret": f"{r['V2_FINAL_ret']-r['V1_ret']:+.1f}pp",
-                "V1 MDD": f"{r['V1_mdd']:+.1f}%",
-                "V2 MDD": f"{r['V2_FINAL_mdd']:+.1f}%",
-                "Δ MDD": f"{r['V2_FINAL_mdd']-r['V1_mdd']:+.1f}pp",
-                "SOXL Ret": f"{r['SOXL_ret']:+.1f}%",
-                "SOXL MDD": f"{r['SOXL_mdd']:+.1f}%",
+                "V1 Ret": f"{r['V1_ret']:+.2f}%",
+                "V2 Ret": f"{r['V2_FINAL_ret']:+.2f}%",
+                "Δ Ret": f"{r['V2_FINAL_ret']-r['V1_ret']:+.2f}pp",
+                "V1 MDD": f"{r['V1_mdd']:+.2f}%",
+                "V2 MDD": f"{r['V2_FINAL_mdd']:+.2f}%",
+                "Δ MDD": f"{r['V2_FINAL_mdd']-r['V1_mdd']:+.2f}pp",
+                "SOXL Ret": f"{r['SOXL_ret']:+.2f}%",
+                "SOXL MDD": f"{r['SOXL_mdd']:+.2f}%",
             })
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
@@ -1452,7 +1452,7 @@ def _render_v2_tab():
                    f"{wins_mdd/total*100:.0f}%")
         yc3.metric("V2 Ret 우위", f"{wins_ret}/{total}",
                    f"{wins_ret/total*100:.0f}%")
-        yc4.metric("평균 ΔRet / ΔMDD", f"{avg_dret:+.1f}pp / {avg_dmdd:+.1f}pp",
+        yc4.metric("평균 ΔRet / ΔMDD", f"{avg_dret:+.2f}pp / {avg_dmdd:+.2f}pp",
                    "MDD는 양수=V2가 덜 떨어짐")
 
         st.markdown("### 📊 연도별 Δ MDD (V2 − V1, pp) — 양수 = V2가 덜 떨어짐")
@@ -1475,13 +1475,13 @@ def _render_v2_tab():
             bbc1, bbc2, bbc3 = st.columns(3)
             with bbc1:
                 st.markdown("**CAGR p50**")
-                st.metric("V2_FINAL", f"{v2b['CAGR_p50']:.1f}%",
-                          f"V1 {v1b['CAGR_p50']:.1f}%")
+                st.metric("V2_FINAL", f"{v2b['CAGR_p50']:.2f}%",
+                          f"V1 {v1b['CAGR_p50']:.2f}%")
             with bbc2:
                 st.markdown("**MDD p50**")
-                st.metric("V2_FINAL", f"{v2b['MDD_p50']:.1f}%",
-                          f"V1 {v1b['MDD_p50']:.1f}% · "
-                          f"{v2b['MDD_p50']-v1b['MDD_p50']:+.1f}pp")
+                st.metric("V2_FINAL", f"{v2b['MDD_p50']:.2f}%",
+                          f"V1 {v1b['MDD_p50']:.2f}% · "
+                          f"{v2b['MDD_p50']-v1b['MDD_p50']:+.2f}pp")
             with bbc3:
                 st.markdown("**Calmar p50**")
                 st.metric("V2_FINAL", f"{v2b['Cal_p50']:.2f}",
@@ -1493,32 +1493,32 @@ def _render_v2_tab():
                            "P(Calmar>2.5)", "P(Calmar>3.0)",
                            "Calmar p5", "Calmar p95", "MDD p5 (꼬리 최악)"],
                 "V1": [
-                    f"{v1b['P_MDD_lt_25']*100:.1f}%",
-                    f"{v1b['P_MDD_lt_30']*100:.1f}%",
-                    f"{v1b['P_MDD_lt_40']*100:.1f}%",
-                    f"{v1b['P_Cal_gt_2_5']*100:.1f}%",
-                    f"{v1b['P_Cal_gt_3']*100:.1f}%",
+                    f"{v1b['P_MDD_lt_25']*100:.2f}%",
+                    f"{v1b['P_MDD_lt_30']*100:.2f}%",
+                    f"{v1b['P_MDD_lt_40']*100:.2f}%",
+                    f"{v1b['P_Cal_gt_2_5']*100:.2f}%",
+                    f"{v1b['P_Cal_gt_3']*100:.2f}%",
                     f"{v1b['Cal_p5']:.2f}",
                     f"{v1b['Cal_p95']:.2f}",
-                    f"{v1b['MDD_p5']:.1f}%",
+                    f"{v1b['MDD_p5']:.2f}%",
                 ],
                 "V2_FINAL": [
-                    f"{v2b['P_MDD_lt_25']*100:.1f}%",
-                    f"{v2b['P_MDD_lt_30']*100:.1f}%",
-                    f"{v2b['P_MDD_lt_40']*100:.1f}%",
-                    f"{v2b['P_Cal_gt_2_5']*100:.1f}%",
-                    f"{v2b['P_Cal_gt_3']*100:.1f}%",
+                    f"{v2b['P_MDD_lt_25']*100:.2f}%",
+                    f"{v2b['P_MDD_lt_30']*100:.2f}%",
+                    f"{v2b['P_MDD_lt_40']*100:.2f}%",
+                    f"{v2b['P_Cal_gt_2_5']*100:.2f}%",
+                    f"{v2b['P_Cal_gt_3']*100:.2f}%",
                     f"{v2b['Cal_p5']:.2f}",
                     f"{v2b['Cal_p95']:.2f}",
-                    f"{v2b['MDD_p5']:.1f}%",
+                    f"{v2b['MDD_p5']:.2f}%",
                 ],
             })
             st.dataframe(tail_rows, use_container_width=True, hide_index=True)
 
             st.info(
                 f"**진짜 운영 추정치 (bootstrap p50)**: "
-                f"V2_FINAL Cal **{v2b['Cal_p50']:.2f}** / MDD **{v2b['MDD_p50']:.1f}%** "
-                f"vs V1 Cal {v1b['Cal_p50']:.2f} / MDD {v1b['MDD_p50']:.1f}%. "
+                f"V2_FINAL Cal **{v2b['Cal_p50']:.2f}** / MDD **{v2b['MDD_p50']:.2f}%** "
+                f"vs V1 Cal {v1b['Cal_p50']:.2f} / MDD {v1b['MDD_p50']:.2f}%. "
                 f"P(MDD<-30%) {v1b['P_MDD_lt_30']*100:.0f}% → **{v2b['P_MDD_lt_30']*100:.0f}%**로 큰 꼬리 축소. "
                 f"단, 헤드라인 Cal 3.46은 in-sample max — forward 기대는 p50 기준."
             )
@@ -1531,10 +1531,10 @@ def _render_v2_tab():
         if cp.exists():
             cr = pd.read_csv(cp)
             disp = cr.copy()
-            disp["v1_ret"] = disp["v1_ret"].apply(lambda x: f"{x:+.1f}%")
-            disp["v2_ret"] = disp["v2_ret"].apply(lambda x: f"{x:+.1f}%")
-            disp["v1_mdd"] = disp["v1_mdd"].apply(lambda x: f"{x:+.1f}%")
-            disp["v2_mdd"] = disp["v2_mdd"].apply(lambda x: f"{x:+.1f}%")
+            disp["v1_ret"] = disp["v1_ret"].apply(lambda x: f"{x:+.2f}%")
+            disp["v2_ret"] = disp["v2_ret"].apply(lambda x: f"{x:+.2f}%")
+            disp["v1_mdd"] = disp["v1_mdd"].apply(lambda x: f"{x:+.2f}%")
+            disp["v2_mdd"] = disp["v2_mdd"].apply(lambda x: f"{x:+.2f}%")
             disp["dret_pp"] = disp["dret_pp"].apply(lambda x: f"{x:+.2f}pp")
             disp["dmdd_pp"] = disp["dmdd_pp"].apply(lambda x: f"{x:+.2f}pp")
             disp.columns = ["Event", "V1 Ret", "V2 Ret", "V1 MDD", "V2 MDD",
