@@ -234,7 +234,7 @@ if page == "📊 백테스트":
 
     col_a, col_b = st.columns([1, 1])
     with col_a:
-        with st.expander("📐 기술 스펙 보기 (코드)", expanded=False):
+        with st.expander("📐 기술 스펙 보기 (코드)", expanded=True):
          st.code(f"""
 # Strategy: V1 CHAMP_NOMARGIN (no-margin variant)
 # = BASE BUBE rotation × VIX dynamic-k overlay × alloc cap 1.0
