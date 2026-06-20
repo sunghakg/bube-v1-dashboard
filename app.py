@@ -200,6 +200,7 @@ with st.sidebar:
         "📅 연도별 성과",
         "🔄 기간별 안정성",
         "💰 실시간 현황",
+        "🔬 백테 vs 페이퍼",
         "📔 매매일지",
         "📖 용어 사전",
     ]
@@ -1484,6 +1485,325 @@ if SHOW_V2 and page == "🆚 V2_FINAL 비교":
 # ───────────────────────────────────────────────────────────
 # TAB 9: 최근 1달 매매일지 (signal_diagnostics + trade_log_enriched)
 # ───────────────────────────────────────────────────────────
+elif page == "🔬 백테 vs 페이퍼":
+    st.subheader("🔬 백테스트 vs 페이퍼 트레이딩 비교")
+    st.caption("같은 기간에서 백테스트(이론 시뮬레이션)와 실제 페이퍼 트레이딩 결과를 나란히 비교합니다.")
+
+    st.markdown("""
+<div style="background:#0f172a;border-left:4px solid #f59e0b;padding:12px 18px;border-radius:8px;margin-bottom:12px;color:#e2e8f0;line-height:1.8">
+<b>📌 백테스트</b> = 역사적 데이터로 완벽한 체결을 가정한 시뮬레이션 (이론적 상한)<br>
+<b>🤖 페이퍼 트레이딩</b> = Alpaca 가상계좌에서 봇이 실제로 실행한 결과<br>
+<span style="opacity:0.8;font-size:0.92em">두 곡선이 다른 이유: 슬리피지·체결 시점 차이·VIX 시차·갭업 폴백 등</span>
+</div>
+""", unsafe_allow_html=True)
+
+    # ── Lazy load ──
+    if "cmp_loaded" not in st.session_state:
+        st.session_state["cmp_loaded"] = False
+
+    _cmp_c1, _cmp_c2 = st.columns([3, 1])
+    with _cmp_c1:
+        st.markdown("**Alpaca 포트폴리오 히스토리 API 호출 필요** (최초 10~20초 소요, 이후 1시간 캐시)")
+    with _cmp_c2:
+        if st.button("🔄 비교 데이터 로드", key="cmp_load_btn", use_container_width=True):
+            st.session_state["cmp_loaded"] = True
+            if "cmp_paper_df" in st.session_state:
+                del st.session_state["cmp_paper_df"]
+            st.cache_data.clear()
+
+    if not st.session_state["cmp_loaded"]:
+        st.info("위 버튼을 눌러 Alpaca 페이퍼 계정 히스토리를 로드하세요.")
+    else:
+        # ── Fetch Alpaca portfolio history ──
+        @st.cache_data(ttl=3600)
+        def _fetch_paper_hist_cmp():
+            try:
+                import requests as _rq
+                _key = _os.environ.get("ALPACA_API_KEY", "")
+                _sec = _os.environ.get("ALPACA_SECRET_KEY", "")
+                if not _key or not _sec:
+                    return None, "ALPACA_API_KEY / ALPACA_SECRET_KEY 환경변수 없음. Streamlit Secrets 확인."
+                _r = _rq.get(
+                    "https://paper-api.alpaca.markets/v2/account/portfolio/history",
+                    headers={"APCA-API-KEY-ID": _key, "APCA-API-SECRET-KEY": _sec},
+                    params={"period": "6M", "timeframe": "1D",
+                            "intraday_reporting": "market_hours", "pnl_reset": "no_reset"},
+                    timeout=20,
+                )
+                if _r.status_code != 200:
+                    return None, f"HTTP {_r.status_code}: {_r.text[:300]}"
+                _d = _r.json()
+                _ts = _d.get("timestamp", [])
+                _eq = _d.get("equity", [])
+                _pl = _d.get("profit_loss", [0] * len(_ts))
+                _plp = _d.get("profit_loss_pct", [0] * len(_ts))
+                _df = pd.DataFrame({
+                    "date": pd.to_datetime(_ts, unit="s", utc=True).tz_localize(None).normalize(),
+                    "equity": [float(x) if x is not None else 0.0 for x in _eq],
+                    "pnl": [float(x) if x is not None else 0.0 for x in _pl],
+                    "pnl_pct": [float(x) if x is not None else 0.0 for x in _plp],
+                })
+                _df = _df[_df["equity"] > 0].set_index("date")
+                _df = _df[~_df.index.duplicated(keep="last")]
+                return _df, None
+            except Exception as _e:
+                import traceback as _tb
+                return None, f"{type(_e).__name__}: {_e}\n{_tb.format_exc()[:400]}"
+
+        with st.spinner("Alpaca 포트폴리오 히스토리 로딩 중..."):
+            _paper_df, _cmp_err = _fetch_paper_hist_cmp()
+
+        if _cmp_err or _paper_df is None or len(_paper_df) < 2:
+            st.error(f"페이퍼 히스토리 로드 실패: {_cmp_err or '데이터 없음'}")
+            st.caption("Streamlit Cloud Secrets에 ALPACA_API_KEY / ALPACA_SECRET_KEY 등록 확인.")
+        else:
+            # ── Load backtest equity ──
+            def _mtime_cmp(p):
+                try: return p.stat().st_mtime
+                except Exception: return 0
+
+            @st.cache_data
+            def _load_eq_cmp(_k):
+                return pd.read_csv(CHAMP / "equity_curves.csv", parse_dates=["date"], index_col="date")
+
+            @st.cache_data
+            def _load_daily_cmp(_k):
+                return pd.read_csv(CHAMP / "daily.csv", parse_dates=["date"], index_col="date")
+
+            @st.cache_data
+            def _load_trades_cmp(_k):
+                t = pd.read_csv(CHAMP / "trades_champ.csv")
+                t["date"] = pd.to_datetime(t["date"])
+                return t
+
+            _eq_bt_all = _load_eq_cmp(_mtime_cmp(CHAMP / "equity_curves.csv"))
+            _daily_bt_all = _load_daily_cmp(_mtime_cmp(CHAMP / "daily.csv"))
+
+            # ── Period overlap ──
+            _p_start = _paper_df.index[0]
+            _p_end = _paper_df.index[-1]
+
+            _bt_eq = _eq_bt_all.loc[_p_start:_p_end, "CHAMP_NOMARGIN"].dropna()
+            if len(_bt_eq) < 2:
+                st.error(f"백테 데이터에 {_p_start.strftime('%Y-%m-%d')}부터의 데이터가 없습니다.")
+                st.stop()
+
+            # Reindex paper to backtest trading days
+            _pa_eq = _paper_df["equity"].reindex(_bt_eq.index).ffill()
+            _pa_eq_raw = _paper_df["equity"]
+
+            # Rebase both to same start
+            _bt_seed = float(_bt_eq.iloc[0])
+            _pa_seed = float(_pa_eq.iloc[0])
+
+            _bt_norm = _bt_eq / _bt_seed * _pa_seed   # rebase backtest to paper start $
+            _pa_norm = _pa_eq                          # paper actual $
+
+            # ── Section 1: Equity curve ──
+            st.markdown("### 📈 자산 곡선 비교")
+            _days = len(_bt_eq)
+            _mo = _days // 21
+            st.caption(
+                f"기준일: {_p_start.strftime('%Y-%m-%d')} → {_p_end.strftime('%Y-%m-%d')} "
+                f"({_days}거래일 ≈ {_mo}개월) · 시작 자산: ${_pa_seed:,.0f}"
+            )
+
+            _cmp_eq_df = pd.DataFrame({
+                "백테스트 V1 (이론)": _bt_norm.values,
+                "페이퍼 트레이딩 (실제)": _pa_norm.values,
+            }, index=_bt_eq.index)
+            st.line_chart(_cmp_eq_df, height=330)
+
+            # Gap chart
+            _gap = _pa_norm - _bt_norm
+            _gap_df = pd.DataFrame({"페이퍼 − 백테스트 ($)": _gap.values}, index=_bt_eq.index)
+            _latest_gap = float(_gap.iloc[-1])
+            st.caption(
+                f"아래: 페이퍼 − 백테스트 괴리. 양수(+) = 실제가 앞섬, 음수(-) = 이론이 앞섬. "
+                f"최근: **${_latest_gap:+,.0f}**"
+            )
+            st.bar_chart(_gap_df, height=160)
+            st.markdown("---")
+
+            # ── Section 2: Performance metrics ──
+            st.markdown("### 📊 기간 성과 지표 비교")
+
+            def _perf(eq):
+                n = len(eq)
+                s = float(eq.iloc[0]); e = float(eq.iloc[-1])
+                n_yrs = n / 252
+                tot = (e / s - 1) * 100
+                cagr = ((e / s) ** (1 / n_yrs) - 1) * 100 if n_yrs > 0.05 else tot
+                cm = eq.cummax(); dd = (eq / cm - 1) * 100
+                mdd = float(dd.min())
+                calmar = cagr / abs(mdd) if mdd < 0 else float("inf")
+                dr = eq.pct_change().dropna()
+                sharpe = float(dr.mean() / dr.std() * (252 ** 0.5)) if dr.std() > 0 else 0.0
+                win_days = int((dr > 0).sum()); total_dr = len(dr)
+                return {
+                    "총 수익률": tot, "CAGR (연환산)": cagr,
+                    "MDD (최대낙폭)": mdd, "Calmar": calmar,
+                    "Sharpe": sharpe, "승일 수 / 전체": f"{win_days}/{total_dr} ({win_days/total_dr*100:.0f}%)" if total_dr else "—",
+                }
+
+            _p_bt_stats = _perf(_bt_norm)
+            _p_pa_stats = _perf(_pa_norm)
+
+            _sm1, _sm2, _sm3 = st.columns(3)
+            _metric_keys = ["총 수익률", "CAGR (연환산)", "MDD (최대낙폭)", "Calmar", "Sharpe"]
+            _is_pct = {"총 수익률", "CAGR (연환산)", "MDD (최대낙폭)"}
+
+            with _sm1:
+                st.markdown("#### 지표")
+                for _k in _metric_keys:
+                    st.markdown(f"**{_k}**")
+                st.markdown(f"**승일 수**")
+
+            with _sm2:
+                st.markdown("#### 📊 백테스트 (이론)")
+                for _k in _metric_keys:
+                    _v = _p_bt_stats[_k]
+                    if isinstance(_v, float) and _v == float("inf"):
+                        st.markdown("∞")
+                    elif _k in _is_pct:
+                        st.markdown(f"`{_v:+.2f}%`")
+                    else:
+                        st.markdown(f"`{_v:.2f}`")
+                st.markdown(f"`{_p_bt_stats['승일 수 / 전체']}`")
+
+            with _sm3:
+                st.markdown("#### 🤖 페이퍼 (실제)")
+                for _k in _metric_keys:
+                    _v = _p_pa_stats[_k]; _vb = _p_bt_stats[_k]
+                    if isinstance(_v, float) and _v == float("inf"):
+                        st.markdown("∞")
+                    elif _k in _is_pct and isinstance(_vb, float) and _vb != float("inf"):
+                        _d = _v - _vb
+                        _color = "#4ade80" if _d >= 0 and _k != "MDD (최대낙폭)" else "#f87171"
+                        if _k == "MDD (최대낙폭)": _color = "#4ade80" if _d >= 0 else "#f87171"
+                        st.markdown(f"`{_v:+.2f}%` <span style='color:{_color};font-size:0.85em'>{_d:+.2f}pp</span>",
+                                    unsafe_allow_html=True)
+                    elif isinstance(_vb, float) and not isinstance(_v, str):
+                        _d = _v - _vb
+                        _color = "#4ade80" if _d >= 0 else "#f87171"
+                        st.markdown(f"`{_v:.2f}` <span style='color:{_color};font-size:0.85em'>{_d:+.2f}</span>",
+                                    unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"`{_v}`")
+                st.markdown(f"`{_p_pa_stats['승일 수 / 전체']}`")
+
+            st.markdown("---")
+
+            # ── Section 3: Daily P&L comparison table ──
+            st.markdown("### 📋 일별 수익률 비교 (최신 날짜부터)")
+
+            _bt_dr = _bt_norm.pct_change() * 100
+            _pa_dr = _pa_norm.pct_change() * 100
+            _daily_bt_sl = _daily_bt_all.reindex(_bt_eq.index)
+
+            _rows_cmp = []
+            for _d in reversed(_bt_eq.index):
+                _bret = float(_bt_dr.get(_d, float("nan")))
+                _pret = float(_pa_dr.get(_d, float("nan")))
+                _diff = (_pret - _bret) if (not pd.isna(_bret) and not pd.isna(_pret)) else float("nan")
+                _bv = float(_bt_norm.get(_d, float("nan")))
+                _pv = float(_pa_norm.get(_d, float("nan")))
+                _rg = str(_daily_bt_sl.loc[_d, "regime"]) if _d in _daily_bt_sl.index and "regime" in _daily_bt_sl.columns else "—"
+                _k = float(_daily_bt_sl.loc[_d, "k_today"]) if _d in _daily_bt_sl.index and "k_today" in _daily_bt_sl.columns else float("nan")
+                _rows_cmp.append({
+                    "날짜": _d.strftime("%Y-%m-%d"),
+                    "레짐(백테)": "🟢 BULL" if _rg == "BULL" else "🔴 BEAR" if _rg == "BEAR" else "🟡 NEUTRAL" if _rg == "NEUTRAL" else _rg,
+                    "k_today(백테)": f"{_k:.3f}" if not pd.isna(_k) else "—",
+                    "백테 일간%": f"{_bret:+.2f}%" if not pd.isna(_bret) else "—",
+                    "페이퍼 일간%": f"{_pret:+.2f}%" if not pd.isna(_pret) else "—",
+                    "괴리(pp)": f"{_diff:+.2f}" if not pd.isna(_diff) else "—",
+                    "백테 자산($)": f"${_bv:,.0f}" if not pd.isna(_bv) else "—",
+                    "페이퍼 자산($)": f"${_pv:,.0f}" if not pd.isna(_pv) else "—",
+                })
+
+            _cmp_tbl = pd.DataFrame(_rows_cmp)
+            st.dataframe(_cmp_tbl, use_container_width=True, hide_index=True, height=440)
+
+            if st.button("💾 비교표 CSV 준비", key="cmp_dl_prep"):
+                st.session_state["cmp_csv"] = _cmp_tbl.to_csv(index=False).encode("utf-8-sig")
+            if "cmp_csv" in st.session_state:
+                _cd0 = _bt_eq.index[0].strftime("%Y%m%d")
+                _cd1 = _bt_eq.index[-1].strftime("%Y%m%d")
+                st.download_button(
+                    "⬇️ 백테 vs 페이퍼 비교표 CSV",
+                    data=st.session_state["cmp_csv"],
+                    file_name=f"bt_vs_paper_{_cd0}_{_cd1}.csv",
+                    mime="text/csv",
+                    key="cmp_dl",
+                )
+
+            st.markdown("---")
+
+            # ── Section 4: Biggest divergence days ──
+            st.markdown("### 🔍 가장 큰 괴리 구간 Top 10")
+            st.caption("백테와 페이퍼 일간수익률이 가장 많이 달랐던 날들. 원인 파악에 활용하세요.")
+
+            _div_series = (_pa_dr - _bt_dr).dropna()
+            if len(_div_series) >= 3:
+                _top_div = _div_series.abs().nlargest(10)
+                _div_rows = []
+                for _td in _top_div.index:
+                    _brd = float(_bt_dr.get(_td, float("nan")))
+                    _prd = float(_pa_dr.get(_td, float("nan")))
+                    _dv = float(_div_series.get(_td, float("nan")))
+                    _rg2 = str(_daily_bt_sl.loc[_td, "regime"]) if _td in _daily_bt_sl.index and "regime" in _daily_bt_sl.columns else "—"
+                    _div_rows.append({
+                        "날짜": _td.strftime("%Y-%m-%d"),
+                        "레짐": _rg2,
+                        "백테 일간%": f"{_brd:+.2f}%" if not pd.isna(_brd) else "—",
+                        "페이퍼 일간%": f"{_prd:+.2f}%" if not pd.isna(_prd) else "—",
+                        "괴리(pp)": f"{_dv:+.2f}",
+                        "방향": "페이퍼↑" if _dv > 0 else "백테↑",
+                    })
+                st.dataframe(pd.DataFrame(_div_rows), use_container_width=True, hide_index=True)
+            else:
+                st.info("비교 기간이 짧아 괴리 분석 데이터 부족.")
+
+            st.markdown("---")
+
+            # ── Section 5: Tracking quality metrics ──
+            st.markdown("### 📐 추적 품질 지표")
+
+            _corr = float(_bt_dr.corr(_pa_dr)) if len(_bt_dr.dropna()) > 3 else float("nan")
+            _mae = float((_pa_dr - _bt_dr).abs().mean()) if len(_bt_dr.dropna()) > 1 else float("nan")
+            _rmse = float(((_pa_dr - _bt_dr) ** 2).mean() ** 0.5) if len(_bt_dr.dropna()) > 1 else float("nan")
+            _cumgap = float(_pa_norm.iloc[-1] - _bt_norm.iloc[-1])
+            _cumgap_pct = _cumgap / float(_bt_norm.iloc[-1]) * 100
+
+            _tq1, _tq2, _tq3, _tq4 = st.columns(4)
+            _tq1.metric("일간수익률 상관계수", f"{_corr:.3f}" if not pd.isna(_corr) else "—",
+                        "1.0 = 완벽 추적",
+                        help="백테와 페이퍼의 일간 수익률 상관관계. 높을수록 봇이 백테를 잘 추적함.")
+            _tq2.metric("평균절대오차 (MAE)", f"{_mae:.2f}pp" if not pd.isna(_mae) else "—",
+                        help="하루 평균 수익률 오차. 낮을수록 백테와 실제가 일치.")
+            _tq3.metric("RMSE (변동성 포함)", f"{_rmse:.2f}pp" if not pd.isna(_rmse) else "—",
+                        help="MAE에 큰 오차에 더 가중치를 준 지표. MAE보다 높으면 간헐적 큰 괴리 존재.")
+            _tq4.metric("누적 괴리 (최종)", f"${_cumgap:+,.0f}",
+                        f"{_cumgap_pct:+.2f}% of BT",
+                        help="최종일 기준 페이퍼 - 백테스트 자산 차이.")
+
+            st.markdown("---")
+
+            # ── Section 6: Interpretation ──
+            st.info("""
+**💡 괴리 주요 원인**
+
+| 원인 | 방향 | 설명 |
+|---|---|---|
+| 슬리피지 | 페이퍼↓ | 봇 stop-buy는 트리거 이후 시장가 → 백테보다 불리한 체결 |
+| VIX 시차 (PR#19 이전) | 양방향 | 당일 VIX 사용 vs 전일 VIX → k_today 차이 |
+| 갭업 stop-buy 거부 | 페이퍼↓ | 강갭업 시 추격 불가 → 진입 스킵 (PR#12 이후 개선) |
+| OPG/CLS 옥션 미체결 | 양방향 | Alpaca paper는 MOO/CLS 미보장 → MARKET fallback |
+| 데이터 ffill | 페이퍼 0% | 공휴일·주말 페이퍼 equity 불변 → 당일 수익률 0% |
+| 봇 레짐 평활화 | 양방향 | 봇 dwell 5일 평활 vs 백테 5-신호 detector → 레짐 판정 최대 5일 지연 |
+""")
+
+
 elif page == "📔 매매일지":
     st.subheader("📔 V1 매매일지 — 일별 레짐·비중·거래 현황")
     st.caption("V1 백테스트의 일별 레짐 판정, VIX 기반 비중(k_today), 활성 엔진, 거래 내역을 보여줍니다. 데이터는 백테스트 기준.")
