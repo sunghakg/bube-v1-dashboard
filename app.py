@@ -278,10 +278,10 @@ with st.sidebar:
     st.markdown("---")
     st.caption("📊 16년 백테 핵심 지표")
     _sb1, _sb2 = st.columns(2)
-    _sb1.metric("Calmar", f"{H_CHAMP['Calmar']:.2f}")
-    _sb2.metric("CAGR", f"{H_CHAMP['CAGR']:.2f}%")
-    _sb1.metric("MDD", f"{H_CHAMP['MDD']:.2f}%")
-    _sb2.metric("$10K→", _money(H_CHAMP['Final_mult'] * 10_000))
+    _sb1.metric("Calmar", f"{_r16['Calmar']:.2f}")
+    _sb2.metric("CAGR", f"{_r16['CAGR']:+.2f}%")
+    _sb1.metric("MDD", f"{_r16['MDD']:.2f}%")
+    _sb2.metric("$10K→", _money(_r16['mult'] * 10_000))
     st.markdown("---")
     st.caption("매일 자동 갱신 (평일 11:15 HST)")
     if last_updated:
@@ -551,10 +551,13 @@ elif page == "📋 거래 내역":
         st.button("최근 3개월", on_click=_reset_dates, key="champ_reset")
 
     st.markdown("**빠른 선택**")
-    pcols = st.columns(8)
+    pcols = st.columns(11)
     _safe_last = lambda dt_str: max(bt_min_d, pd.Timestamp(dt_str).date())
     presets = [
         ("16년 전체", str(bt_min_d), str(bt_max_d)),
+        ("최근 1년", str(_safe_last((pd.Timestamp(bt_max_d) - pd.DateOffset(years=1)).strftime("%Y-%m-%d"))), str(bt_max_d)),
+        ("최근 3년", str(_safe_last((pd.Timestamp(bt_max_d) - pd.DateOffset(years=3)).strftime("%Y-%m-%d"))), str(bt_max_d)),
+        ("최근 5년", str(_safe_last((pd.Timestamp(bt_max_d) - pd.DateOffset(years=5)).strftime("%Y-%m-%d"))), str(bt_max_d)),
         ("2010s (10년)", str(bt_min_d), "2019-12-31"),
         ("2020 Covid", "2020-01-02", "2020-06-30"),
         ("2022 폭락", "2022-01-01", "2022-12-31"),
@@ -647,7 +650,23 @@ elif page == "📋 거래 내역":
                 chart_dict["V2_FINAL ($)"] = v2_aligned.values
 
         chart_period = pd.DataFrame(chart_dict, index=chart_index)
-        st.line_chart(chart_period, height=360)
+        import altair as _alt
+        _cp_cols = list(chart_period.columns)
+        _cp_melt = chart_period.reset_index().melt(id_vars=["date"], var_name="전략", value_name="자산")
+        _cp_colors = ["#3b82f6", "#6b7280", "#f59e0b"][:len(_cp_cols)]
+        st.altair_chart(
+            _alt.Chart(_cp_melt).mark_line(strokeWidth=1.5).encode(
+                x=_alt.X("date:T", title="날짜"),
+                y=_alt.Y("자산:Q", title="자산 ($)", axis=_alt.Axis(format="$,.0f")),
+                color=_alt.Color("전략:N", scale=_alt.Scale(domain=_cp_cols, range=_cp_colors)),
+                tooltip=[
+                    _alt.Tooltip("date:T", title="날짜", format="%Y-%m-%d"),
+                    _alt.Tooltip("전략:N", title="전략"),
+                    _alt.Tooltip("자산:Q", title="자산", format="$,.0f"),
+                ],
+            ).properties(height=360),
+            use_container_width=True,
+        )
 
         if eq_v2_all is not None:
             v2_end = eq_v2_all.index.max().date()
@@ -672,10 +691,30 @@ elif page == "📋 거래 내역":
                     vix_med = float(daily_period["VIX"].median())
                     k3.metric("VIX median", f"{vix_med:.1f}")
                 st.markdown("**일별 k_today (VIX-driven dynamic alloc multiplier)**")
-                st.line_chart(daily_period["k_today"], height=220)
+                import altair as _alt
+                _k_df = daily_period[["k_today"]].reset_index().rename(columns={"date":"날짜","k_today":"k_today"})
+                st.altair_chart(
+                    _alt.Chart(_k_df).mark_line(color="#3b82f6", strokeWidth=1.5).encode(
+                        x=_alt.X("날짜:T", title="날짜"),
+                        y=_alt.Y("k_today:Q", title="k_today", scale=_alt.Scale(zero=False)),
+                        tooltip=[_alt.Tooltip("날짜:T", title="날짜", format="%Y-%m-%d"),
+                                 _alt.Tooltip("k_today:Q", title="k_today", format=".3f")],
+                    ).properties(height=220),
+                    use_container_width=True,
+                )
                 if "VIX" in daily_period.columns:
                     st.markdown("**일별 VIX (= 20일 때 k=base 0.65)**")
-                    st.line_chart(daily_period["VIX"], height=180)
+                    import altair as _alt
+                    _vix_df = daily_period[["VIX"]].reset_index().rename(columns={"date":"날짜","VIX":"VIX"})
+                    st.altair_chart(
+                        _alt.Chart(_vix_df).mark_line(color="#f59e0b", strokeWidth=1.5).encode(
+                            x=_alt.X("날짜:T", title="날짜"),
+                            y=_alt.Y("VIX:Q", title="VIX", scale=_alt.Scale(zero=False)),
+                            tooltip=[_alt.Tooltip("날짜:T", title="날짜", format="%Y-%m-%d"),
+                                     _alt.Tooltip("VIX:Q", title="VIX", format=".2f")],
+                        ).properties(height=180),
+                        use_container_width=True,
+                    )
 
             if "regime" in daily_period.columns:
                 rg1, rg2 = st.columns(2)
@@ -899,6 +938,40 @@ elif page == "🎲 확률 분포":
         f"미래 path가 -30% 넘어갈 확률 {b['p_mdd_worse_than_30']:.0f}%, -40% 확률 {b['p_mdd_worse_than_40']:.0f}% 정도. **mentally prepare**."
     )
 
+
+    # ── Bootstrap 분포 시각화 ──────────────────────────────────
+    st.markdown("---")
+    st.markdown("### 📊 Bootstrap 분포 시각화 (5,000 paths)")
+    import altair as _alt
+    _bv_rows = []
+    for _metric, _p05, _p50, _p95, _unit in [
+        ("CAGR", b["cagr_p05"], b["cagr_p50"], b["cagr_p95"], "%"),
+        ("MDD",  b["mdd_p05"],  b["mdd_p50"],  b["mdd_p95"],  "%"),
+        ("Calmar", b["cal_p05"], b["cal_p50"], b["cal_p95"], ""),
+    ]:
+        _bv_rows.append({"지표": _metric, "구간": "P5~P95", "low": _p05, "high": _p95, "p50": _p50, "unit": _unit})
+    _bv_df = pd.DataFrame(_bv_rows)
+    _boot_charts = []
+    for _, _row in _bv_df.iterrows():
+        _fmt = ".2f" if _row["unit"] == "" else "+.2f"
+        _band = _alt.Chart(pd.DataFrame({"x": [_row["p50"]], "low": [_row["low"]], "high": [_row["high"]]})).mark_rule(
+            color="#6b7280", strokeWidth=12, opacity=0.3
+        ).encode(x=_alt.X("low:Q"), x2="high:Q", y=_alt.value(0))
+        _med  = _alt.Chart(pd.DataFrame({"x": [_row["p50"]]})).mark_rule(
+            color="#3b82f6", strokeWidth=3
+        ).encode(x=_alt.X("x:Q", title=f"{_row['지표']} ({_row['unit']})" if _row['unit'] else _row['지표']))
+        _p05l = _alt.Chart(pd.DataFrame({"x": [_row["low"]]})).mark_rule(
+            color="#f87171", strokeWidth=1.5, strokeDash=[4, 2]
+        ).encode(x="x:Q")
+        _p95l = _alt.Chart(pd.DataFrame({"x": [_row["high"]]})).mark_rule(
+            color="#4ade80", strokeWidth=1.5, strokeDash=[4, 2]
+        ).encode(x="x:Q")
+        _boot_charts.append((_alt.layer(_band, _med, _p05l, _p95l)
+            .properties(title=f"{_row['지표']}: P5={_row['low']:.2f} | P50={_row['p50']:.2f} | P95={_row['p95']:.2f}", height=80, width=200)
+        ))
+    st.altair_chart(_alt.hconcat(*_boot_charts), use_container_width=True)
+    st.caption("파란 실선=중앙값(P50) · 회색 막대=P5~P95 구간 · 빨간점선=P5(최악) · 초록점선=P95(최선)")
+
     st.markdown("---")
     st.markdown("### ✅ VIX shuffle test (검증)")
     st.markdown("""
@@ -971,17 +1044,39 @@ elif page == "📅 연도별 성과":
 
         # Yearly equity chart
         st.markdown("### 📈 연말 자본 ($100K 시드 기준)")
-        chart_y = pd.DataFrame({
-            "BASE end $": y.set_index("year")["BASE_end_$"].values,
-            "CHAMP end $": y.set_index("year")["CHAMP_end_$"].values,
-        }, index=y["year"].values)
-        st.line_chart(chart_y, height=320)
+        import altair as _alt
+        _cy_df = pd.DataFrame({
+            "연도": list(y["year"].astype(int).values) * 2,
+            "자산": list(y["BASE_end_$"].values) + list(y["CHAMP_end_$"].values),
+            "전략": ["BASE k=0.65"] * len(y) + ["V1 CHAMP_NOMARGIN"] * len(y),
+        })
+        st.altair_chart(
+            _alt.Chart(_cy_df).mark_line(point=True, strokeWidth=2).encode(
+                x=_alt.X("연도:O", title="연도"),
+                y=_alt.Y("자산:Q", title="자산 ($)", axis=_alt.Axis(format="$,.0f")),
+                color=_alt.Color("전략:N", scale=_alt.Scale(
+                    domain=["V1 CHAMP_NOMARGIN", "BASE k=0.65"], range=["#3b82f6", "#6b7280"])),
+                tooltip=[_alt.Tooltip("연도:O", title="연도"),
+                         _alt.Tooltip("전략:N", title="전략"),
+                         _alt.Tooltip("자산:Q", title="자산", format="$,.0f")],
+            ).properties(height=320),
+            use_container_width=True,
+        )
 
         # Δ ret bar
         st.markdown("### 📊 연도별 Δ Return (CHAMP − BASE, pp)")
-        delta_chart = pd.DataFrame({"Δ Ret pp": y["Δ_ret_pp"].values},
-                                    index=y["year"].astype(int).values)
-        st.bar_chart(delta_chart, height=240)
+        import altair as _alt
+        _dr_df = pd.DataFrame({"연도": y["year"].astype(int).values, "Δ Ret pp": y["Δ_ret_pp"].values})
+        st.altair_chart(
+            _alt.Chart(_dr_df).mark_bar().encode(
+                x=_alt.X("연도:O", title="연도"),
+                y=_alt.Y("Δ Ret pp:Q", title="Δ Return (pp)"),
+                color=_alt.condition(_alt.datum["Δ Ret pp"] >= 0, _alt.value("#4ade80"), _alt.value("#f87171")),
+                tooltip=[_alt.Tooltip("연도:O", title="연도"),
+                         _alt.Tooltip("Δ Ret pp:Q", title="Δ Ret", format="+.2f")],
+            ).properties(height=240),
+            use_container_width=True,
+        )
 
         st.success(
             f"💡 **17년 중 {wins_ret}년**에서 CHAMP > BASE (수익률 기준). 평균 +{avg_ret:.2f}pp/yr alpha. "
@@ -1021,16 +1116,46 @@ elif page == "🔄 기간별 안정성":
         st.markdown("---")
         # Calmar trajectory across windows
         st.markdown("### 📈 Window별 Calmar 추이")
-        calmar_chart = sw.set_index("window")[["BASE_Calmar", "CHAMP_Calmar"]].rename(
-            columns={"BASE_Calmar": "BASE", "CHAMP_Calmar": "CHAMP_NOMARGIN"}
+        import altair as _alt
+        _cal_df = pd.DataFrame({
+            "window": list(sw["window"].values) * 2,
+            "Calmar": list(sw["BASE_Calmar"].values) + list(sw["CHAMP_Calmar"].values),
+            "전략": ["BASE k=0.65"] * len(sw) + ["V1 CHAMP_NOMARGIN"] * len(sw),
+        })
+        st.altair_chart(
+            _alt.Chart(_cal_df).mark_bar().encode(
+                x=_alt.X("window:N", title="윈도우", sort=None),
+                y=_alt.Y("Calmar:Q", title="Calmar"),
+                color=_alt.Color("전략:N", scale=_alt.Scale(
+                    domain=["V1 CHAMP_NOMARGIN", "BASE k=0.65"], range=["#3b82f6", "#6b7280"])),
+                xOffset=_alt.XOffset("전략:N"),
+                tooltip=[_alt.Tooltip("window:N", title="윈도우"),
+                         _alt.Tooltip("전략:N", title="전략"),
+                         _alt.Tooltip("Calmar:Q", title="Calmar", format=".2f")],
+            ).properties(height=300),
+            use_container_width=True,
         )
-        st.bar_chart(calmar_chart, height=300)
 
         st.markdown("### 📈 Window별 CAGR")
-        cagr_chart = sw.set_index("window")[["BASE_CAGR_%", "CHAMP_CAGR_%"]].rename(
-            columns={"BASE_CAGR_%": "BASE", "CHAMP_CAGR_%": "CHAMP_NOMARGIN"}
+        import altair as _alt
+        _cg_df = pd.DataFrame({
+            "window": list(sw["window"].values) * 2,
+            "CAGR (%)": list(sw["BASE_CAGR_%"].values) + list(sw["CHAMP_CAGR_%"].values),
+            "전략": ["BASE k=0.65"] * len(sw) + ["V1 CHAMP_NOMARGIN"] * len(sw),
+        })
+        st.altair_chart(
+            _alt.Chart(_cg_df).mark_bar().encode(
+                x=_alt.X("window:N", title="윈도우", sort=None),
+                y=_alt.Y("CAGR (%):Q", title="CAGR (%)"),
+                color=_alt.Color("전략:N", scale=_alt.Scale(
+                    domain=["V1 CHAMP_NOMARGIN", "BASE k=0.65"], range=["#3b82f6", "#6b7280"])),
+                xOffset=_alt.XOffset("전략:N"),
+                tooltip=[_alt.Tooltip("window:N", title="윈도우"),
+                         _alt.Tooltip("전략:N", title="전략"),
+                         _alt.Tooltip("CAGR (%):Q", title="CAGR", format="+.2f")],
+            ).properties(height=300),
+            use_container_width=True,
         )
-        st.bar_chart(cagr_chart, height=300)
 
         # All windows CHAMP > BASE?
         all_calmar = (sw["CHAMP_Calmar"] > sw["BASE_Calmar"]).all()
@@ -1432,13 +1557,33 @@ def _render_v2_tab():
             "V2_FINAL ($)": eq_v2["V2_FINAL"] * scale_v2,
             "SOXL B&H ($)": eq_v2["SOXL_buy_hold"] * scale_v2,
         }, index=eq_v2.index)
-        st.line_chart(chart_v2, height=380)
+        _cv2_long = chart_v2.reset_index().melt(id_vars="date", var_name="전략", value_name="자산")
+        st.altair_chart(
+            alt.Chart(_cv2_long).mark_line(strokeWidth=1.5).encode(
+                x=alt.X("date:T", title="날짜"),
+                y=alt.Y("자산:Q", title="자산 ($)", axis=alt.Axis(format="$,.0f")),
+                color=alt.Color("전략:N"),
+                tooltip=[alt.Tooltip("date:T", title="날짜", format="%Y-%m-%d"),
+                         alt.Tooltip("전략:N"), alt.Tooltip("자산:Q", title="자산", format="$,.0f")],
+            ).properties(height=380),
+            use_container_width=True,
+        )
 
         # log scale option
         with st.expander("📐 Log-scale 보기"):
             log_chart = chart_v2.apply(lambda c: np.log10(c))
             log_chart.columns = ["log10 " + c for c in chart_v2.columns]
-            st.line_chart(log_chart, height=320)
+            _lc_long = log_chart.reset_index().melt(id_vars="date", var_name="전략", value_name="log10값")
+            st.altair_chart(
+                alt.Chart(_lc_long).mark_line(strokeWidth=1.5).encode(
+                    x=alt.X("date:T", title="날짜"),
+                    y=alt.Y("log10값:Q", title="log10(자산)"),
+                    color=alt.Color("전략:N"),
+                    tooltip=[alt.Tooltip("date:T", title="날짜", format="%Y-%m-%d"),
+                             alt.Tooltip("전략:N"), alt.Tooltip("log10값:Q", format=".3f")],
+                ).properties(height=320),
+                use_container_width=True,
+            )
 
         st.markdown("---")
 
@@ -1479,11 +1624,22 @@ def _render_v2_tab():
                    "MDD는 양수=V2가 덜 떨어짐")
 
         st.markdown("### 📊 연도별 Δ MDD (V2 − V1, pp) — 양수 = V2가 덜 떨어짐")
-        ydiff = pd.DataFrame(
-            {"Δ MDD pp": (yb["V2_FINAL_mdd"] - yb["V1_mdd"]).values},
-            index=yb["year"].astype(int).values
+        _ydiff_df = pd.DataFrame({
+            "연도": yb["year"].astype(int).values,
+            "Δ MDD pp": (yb["V2_FINAL_mdd"] - yb["V1_mdd"]).values,
+        })
+        st.altair_chart(
+            alt.Chart(_ydiff_df).mark_bar().encode(
+                x=alt.X("연도:O", title="연도"),
+                y=alt.Y("Δ MDD pp:Q", title="Δ MDD (pp)"),
+                color=alt.condition(
+                    alt.datum["Δ MDD pp"] >= 0,
+                    alt.value("#22c55e"), alt.value("#ef4444"),
+                ),
+                tooltip=[alt.Tooltip("연도:O"), alt.Tooltip("Δ MDD pp:Q", format="+.2f")],
+            ).properties(height=240),
+            use_container_width=True,
         )
-        st.bar_chart(ydiff, height=240)
 
         st.markdown("---")
 
@@ -1734,11 +1890,31 @@ elif page == "🔬 백테 vs 페이퍼":
                 f"({_days}거래일 ≈ {_mo}개월) · 시작 자산: ${_pa_seed:,.0f}"
             )
 
-            _cmp_eq_df = pd.DataFrame({
-                "백테스트 V1 (이론)": _bt_norm.values,
-                "페이퍼 트레이딩 (실제)": _pa_norm.values,
-            }, index=_bt_eq.index)
-            st.line_chart(_cmp_eq_df, height=330)
+            import altair as _alt
+            _cmp_melt = pd.DataFrame({
+                "날짜": list(_bt_eq.index) * 2,
+                "자산": list(_bt_norm.values) + list(_pa_norm.values),
+                "구분": ["📊 백테스트 (이론)"] * len(_bt_eq) + ["🤖 페이퍼 (실제)"] * len(_bt_eq),
+            })
+            st.altair_chart(
+                _alt.Chart(_cmp_melt).mark_line(strokeWidth=2).encode(
+                    x=_alt.X("날짜:T", title="날짜"),
+                    y=_alt.Y("자산:Q", title="자산 ($)", axis=_alt.Axis(format="$,.0f")),
+                    color=_alt.Color("구분:N", scale=_alt.Scale(
+                        domain=["📊 백테스트 (이론)", "🤖 페이퍼 (실제)"],
+                        range=["#6b7280", "#3b82f6"])),
+                    tooltip=[_alt.Tooltip("날짜:T", title="날짜", format="%Y-%m-%d"),
+                             _alt.Tooltip("구분:N", title="구분"),
+                             _alt.Tooltip("자산:Q", title="자산", format="$,.0f")],
+                ).properties(height=330),
+                use_container_width=True,
+            )
+            if _p_start <= pd.Timestamp("2026-06-07"):
+                st.warning(
+                    "⚠️ **누락 구간**: 페이퍼 봇 시작일(2026-05-26) ~ EOD 레저 시작일(2026-06-08) "
+                    "구간의 페이퍼 자산이 ledger에 없음. 위 차트는 6/8부터만 비교 가능. "
+                    "이 기간 BT +21.6% vs 페이퍼 +5.2% 괴리는 stop-buy 거부(PR#12 이전) 추정."
+                )
 
             # Gap chart
             _gap = _pa_norm - _bt_norm
@@ -1748,7 +1924,18 @@ elif page == "🔬 백테 vs 페이퍼":
                 f"아래: 페이퍼 − 백테스트 괴리. 양수(+) = 실제가 앞섬, 음수(-) = 이론이 앞섬. "
                 f"최근: **${_latest_gap:+,.0f}**"
             )
-            st.bar_chart(_gap_df, height=160)
+            import altair as _alt
+            _gp_df = pd.DataFrame({"날짜": _bt_eq.index, "괴리": _gap.values})
+            st.altair_chart(
+                _alt.Chart(_gp_df).mark_bar().encode(
+                    x=_alt.X("날짜:T", title="날짜"),
+                    y=_alt.Y("괴리:Q", title="페이퍼 − 백테 ($)"),
+                    color=_alt.condition(_alt.datum["괴리"] >= 0, _alt.value("#4ade80"), _alt.value("#f87171")),
+                    tooltip=[_alt.Tooltip("날짜:T", title="날짜", format="%Y-%m-%d"),
+                             _alt.Tooltip("괴리:Q", title="페이퍼−백테", format="$+,.0f")],
+                ).properties(height=160),
+                use_container_width=True,
+            )
             st.markdown("---")
 
             # ── Section 2: Performance metrics ──
@@ -2001,8 +2188,18 @@ elif page == "📔 매매일지":
     # ── 미니 자산 차트 ──
     if len(_eq_rec) >= 2:
         st.markdown("### 📈 기간 자산 추이")
-        _eq_disp = pd.DataFrame({"V1 자산 ($)": _eq_rec.values}, index=_eq_rec.index)
-        st.line_chart(_eq_disp, height=200)
+        import altair as _alt
+        _eq_j_df = pd.DataFrame({"날짜": _eq_rec.index, "자산": _eq_rec.values}).dropna()
+        st.altair_chart(
+            _alt.Chart(_eq_j_df).mark_line(color="#3b82f6", strokeWidth=2).encode(
+                x=_alt.X("날짜:T", title="날짜"),
+                y=_alt.Y("자산:Q", title="V1 자산 ($)", axis=_alt.Axis(format="$,.0f"),
+                         scale=_alt.Scale(zero=False)),
+                tooltip=[_alt.Tooltip("날짜:T", title="날짜", format="%Y-%m-%d"),
+                         _alt.Tooltip("자산:Q", title="자산", format="$,.0f")],
+            ).properties(height=200),
+            use_container_width=True,
+        )
         st.markdown("---")
 
     # ── 일별 현황 테이블 ──
