@@ -2147,15 +2147,16 @@ elif page == "📔 매매일지":
     _d_min = _daily_j.index[0].date()
     _d_max = _daily_j.index[-1].date()
 
-    # 퀵 프리셋 버튼
+    # 퀵 프리셋 버튼 — date_input 위젯 state도 같이 업데이트해야 반영됨
     _qc = st.columns(6)
     for _qi, (_ql, _qd) in enumerate([("20일", 20), ("1달", 30), ("2달", 60), ("3달", 90), ("6달", 180), ("전체", None)]):
         if _qc[_qi].button(_ql, use_container_width=True, key=f"j2q_{_ql}"):
-            st.session_state["j2_date_s"] = _d_max - pd.Timedelta(days=_qd) if _qd else _d_min
-            st.session_state["j2_date_e"] = _d_max
+            _qs = _d_max - pd.Timedelta(days=_qd) if _qd else _d_min
+            st.session_state["j2_dpick_s"] = _qs
+            st.session_state["j2_dpick_e"] = _d_max
 
-    _def_s = st.session_state.get("j2_date_s", _d_max - pd.Timedelta(days=30))
-    _def_e = st.session_state.get("j2_date_e", _d_max)
+    _def_s = st.session_state.get("j2_dpick_s", _d_max - pd.Timedelta(days=30))
+    _def_e = st.session_state.get("j2_dpick_e", _d_max)
     _dc1, _dc2 = st.columns(2)
     _j2_s = _dc1.date_input("시작일", value=_def_s, min_value=_d_min, max_value=_d_max, key="j2_dpick_s")
     _j2_e = _dc2.date_input("종료일", value=_def_e, min_value=_d_min, max_value=_d_max, key="j2_dpick_e")
@@ -2187,7 +2188,8 @@ elif page == "📔 매매일지":
     _avg_k = float(_daily_rec["k_today"].mean()) if _has_k else float("nan")
     _trade_days = len(_by_date)
 
-    st.markdown(f"### 📊 {_sel} 요약")
+    _period_label = f"{_j2_s.strftime('%Y-%m-%d')} ~ {_j2_e.strftime('%Y-%m-%d')} ({len(_daily_rec)}일)"
+    st.markdown(f"### 📊 {_period_label} 요약")
     _h1, _h2, _h3, _h4 = st.columns(4)
     _h1.metric("레짐 — BULL 일수", f"{_n_bull}일", f"BEAR {_n_bear}일 / NEUTRAL {_n_neut}일")
     _h2.metric("평균 VIX", f"{_avg_vix:.1f}" if not pd.isna(_avg_vix) else "—",
