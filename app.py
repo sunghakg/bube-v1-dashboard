@@ -2350,36 +2350,87 @@ elif page == "📔 매매일지":
                 if isinstance(_df.columns, pd.MultiIndex):
                     _df.columns = _df.columns.droplevel(1)
                 return _df.reset_index()[["Date", "Open", "High", "Low", "Close"]]
+
             _soxl_raw = _fetch_soxl_ohlc(_sel_date_str, 2)
             if not _soxl_raw.empty:
                 _soxl_df = _soxl_raw.copy()
                 _soxl_df.columns = ["날짜", "시가", "고가", "저가", "종가"]
+                # 문자열 날짜 — ordinal 축으로 사용 (temporal 축은 날짜 반복 문제)
+                _soxl_df["날짜_str"] = pd.to_datetime(_soxl_df["날짜"]).dt.strftime("%Y-%m-%d")
+                _soxl_df["날짜_표시"] = pd.to_datetime(_soxl_df["날짜"]).dt.strftime("%m/%d")
                 _soxl_df["색"] = _soxl_df.apply(
                     lambda r: "#22c55e" if r["종가"] >= r["시가"] else "#ef4444", axis=1
                 )
-                _soxl_vline = _alt_dd.Chart(pd.DataFrame({"날짜": [_sel_ts]})).mark_rule(
-                    color="#fbbf24", strokeWidth=2, strokeDash=[6, 3]
-                ).encode(x="날짜:T")
-                _cdl_rule = _alt_dd.Chart(_soxl_df).mark_rule(strokeWidth=1.5).encode(
-                    x=_alt_dd.X("날짜:T", title="날짜", axis=_alt_dd.Axis(format="%m/%d")),
-                    y=_alt_dd.Y("저가:Q", title="SOXL ($)", scale=_alt_dd.Scale(zero=False)),
+                _soxl_df["선택"] = _soxl_df["날짜_str"] == _sel_date_str
+
+                # daily 컨텍스트 병합
+                def _dval(col, d_str, fmt=None):
+                    _ts = pd.Timestamp(d_str)
+                    if _ts in _win.index and col in _win.columns:
+                        v = _win.at[_ts, col]
+                        return fmt(v) if fmt and pd.notna(v) else v
+                    return "—"
+
+                _soxl_df["V1수익률"] = _soxl_df["날짜_str"].apply(
+                    lambda d: _dval("CHAMP_ret_%", d))
+                _soxl_df["레짐"] = _soxl_df["날짜_str"].apply(
+                    lambda d: _dval("regime", d))
+                _soxl_df["VIX"] = _soxl_df["날짜_str"].apply(
+                    lambda d: _dval("VIX", d))
+                _soxl_df["k값"] = _soxl_df["날짜_str"].apply(
+                    lambda d: _dval("k_today", d))
+
+                # 거래 요약 (해당 기간 내)
+                _t_sum = {}
+                for _td, _tg in _trades_j[
+                    (_trades_j["date"].dt.normalize() >= pd.Timestamp(_soxl_df["날짜_str"].iloc[0])) &
+                    (_trades_j["date"].dt.normalize() <= pd.Timestamp(_soxl_df["날짜_str"].iloc[-1]))
+                ].groupby(_trades_j["date"].dt.normalize()):
+                    _acts = " / ".join(
+                        f"{r['leg']} {r['action']}" for _, r in _tg.iterrows()
+                    )
+                    _t_sum[_td.strftime("%Y-%m-%d")] = f"{_acts}  (P&L ${_tg['pnl'].sum():+,.0f})"
+                _soxl_df["거래"] = _soxl_df["날짜_str"].apply(
+                    lambda d: _t_sum.get(d, "거래 없음"))
+
+                _sbase = _alt_dd.Chart(_soxl_df)
+                _x_enc = _alt_dd.X("날짜_표시:O", title="날짜", sort=None,
+                                    axis=_alt_dd.Axis(labelAngle=0))
+
+                _cdl_rule = _sbase.mark_rule(strokeWidth=1.5).encode(
+                    x=_x_enc,
+                    y=_alt_dd.Y("저가:Q", title="SOXL ($)",
+                                scale=_alt_dd.Scale(zero=False)),
                     y2="고가:Q",
                     color=_alt_dd.Color("색:N", scale=None),
                 )
-                _cdl_bar = _alt_dd.Chart(_soxl_df).mark_bar(width=20).encode(
-                    x="날짜:T",
+                _cdl_bar = _sbase.mark_bar(width=30).encode(
+                    x=_alt_dd.X("날짜_표시:O", sort=None),
                     y="시가:Q",
                     y2="종가:Q",
                     color=_alt_dd.Color("색:N", scale=None),
-                    tooltip=[_alt_dd.Tooltip("날짜:T", format="%Y-%m-%d"),
-                             _alt_dd.Tooltip("시가:Q",  title="시가",  format="$.2f"),
-                             _alt_dd.Tooltip("고가:Q",  title="고가",  format="$.2f"),
-                             _alt_dd.Tooltip("저가:Q",  title="저가",  format="$.2f"),
-                             _alt_dd.Tooltip("종가:Q",  title="종가",  format="$.2f")],
+                    stroke=_alt_dd.condition(
+                        _alt_dd.datum["선택"],
+                        _alt_dd.value("#fbbf24"),
+                        _alt_dd.value("transparent"),
+                    ),
+                    strokeWidth=_alt_dd.value(3),
+                    tooltip=[
+                        _alt_dd.Tooltip("날짜_str:N",  title="날짜"),
+                        _alt_dd.Tooltip("시가:Q",       title="시가",       format="$.2f"),
+                        _alt_dd.Tooltip("고가:Q",       title="고가",       format="$.2f"),
+                        _alt_dd.Tooltip("저가:Q",       title="저가",       format="$.2f"),
+                        _alt_dd.Tooltip("종가:Q",       title="종가",       format="$.2f"),
+                        _alt_dd.Tooltip("V1수익률:Q",   title="V1 수익률",  format="+.2f"),
+                        _alt_dd.Tooltip("레짐:N",       title="레짐"),
+                        _alt_dd.Tooltip("VIX:Q",        title="VIX",        format=".1f"),
+                        _alt_dd.Tooltip("k값:Q",        title="k_today",    format=".3f"),
+                        _alt_dd.Tooltip("거래:N",       title="거래"),
+                    ],
                 )
-                st.markdown("**🕯 SOXL ±2 거래일 일봉**")
+                st.markdown("**🕯 SOXL ±2 거래일 일봉** (황색 테두리 = 선택일 / 툴팁 호버로 상세 확인)")
                 st.altair_chart(
-                    (_cdl_rule + _cdl_bar + _soxl_vline).properties(height=200),
+                    (_cdl_rule + _cdl_bar).properties(height=220),
                     use_container_width=True,
                 )
         except Exception as _e_soxl:
