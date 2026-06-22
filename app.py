@@ -2199,6 +2199,29 @@ elif page == "📔 매매일지":
     _h4.metric("거래 발생일", f"{_trade_days}일",
                f"전체 {len(_daily_rec)}일 중")
 
+    # ── 기간 성과 지표 ──
+    _eq_p = _eq_rec.dropna()
+    if len(_eq_p) >= 2:
+        _tot_ret = _eq_p.iloc[-1] / _eq_p.iloc[0] - 1
+        _n_yr = (_eq_p.index[-1] - _eq_p.index[0]).days / 365.25
+        _cagr = ((_eq_p.iloc[-1] / _eq_p.iloc[0]) ** (1 / _n_yr) - 1) if _n_yr > 0.01 else _tot_ret
+        _roll_max = _eq_p.expanding().max()
+        _mdd = ((_eq_p - _roll_max) / _roll_max).min()
+        _calmar = _cagr / abs(_mdd) if abs(_mdd) > 1e-9 else float("nan")
+        _win_days = int((_eq_daily_ret.dropna() > 0).sum())
+        _total_days_r = int(_eq_daily_ret.dropna().count())
+        _win_rate = _win_days / _total_days_r if _total_days_r > 0 else float("nan")
+
+        st.markdown("##### 📐 기간 성과")
+        _p1, _p2, _p3, _p4, _p5 = st.columns(5)
+        _p1.metric("총 수익률", f"{_tot_ret:+.2%}", f"{_n_yr:.1f}년 기간")
+        _p2.metric("CAGR (연환산)", f"{_cagr:+.2%}", "연율화 수익률")
+        _p3.metric("MDD", f"{_mdd:.2%}", "기간 내 최대 낙폭")
+        _p4.metric("Calmar", f"{_calmar:.2f}" if not pd.isna(_calmar) else "—",
+                   "CAGR ÷ |MDD|")
+        _p5.metric("일간 승률", f"{_win_rate:.1%}" if not pd.isna(_win_rate) else "—",
+                   f"{_win_days}/{_total_days_r}일")
+
     st.markdown("---")
 
     # ── 미니 자산 차트 ──
