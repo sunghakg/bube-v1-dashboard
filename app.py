@@ -2164,21 +2164,24 @@ elif page == "📔 매매일지":
             use_container_width=True,
         )
 
-        # ── SOXL ±2 거래일 라인차트 + 매매 시점 마커 ──
+        # ── SOXL 캔들 + 매매 시점 마커 (전후 거래일 선택 가능) ──
+        _soxl_win = st.select_slider(
+            "🕯 SOXL 캔들 전후 거래일", options=[3, 5, 7, 10, 15], value=5,
+            key="j2_soxl_win", help="선택일 기준 앞뒤로 보여줄 거래일 수 (넓힐수록 추세 맥락↑)")
         try:
             import yfinance as _yf
             @st.cache_data(ttl=3600)
             def _fetch_soxl_ohlc(_ds, _w):
                 _d = pd.Timestamp(_ds)
-                _s = (_d - pd.offsets.BDay(_w + 2)).strftime("%Y-%m-%d")
-                _e = (_d + pd.offsets.BDay(_w + 2)).strftime("%Y-%m-%d")
+                _s = (_d - pd.offsets.BDay(_w + 1)).strftime("%Y-%m-%d")
+                _e = (_d + pd.offsets.BDay(_w + 1)).strftime("%Y-%m-%d")
                 _df = _yf.download("SOXL", start=_s, end=_e, auto_adjust=True,
                                    progress=False, multi_level_index=False)
                 if isinstance(_df.columns, pd.MultiIndex):
                     _df.columns = _df.columns.droplevel(1)
                 return _df.reset_index()[["Date", "Open", "High", "Low", "Close"]]
 
-            _soxl_raw = _fetch_soxl_ohlc(_sel_date_str, 2)
+            _soxl_raw = _fetch_soxl_ohlc(_sel_date_str, _soxl_win)
             if not _soxl_raw.empty:
                 _soxl_df = _soxl_raw.copy()
                 _soxl_df.columns = ["날짜", "시가", "고가", "저가", "종가"]
@@ -2225,13 +2228,21 @@ elif page == "📔 매매일지":
                 # 캔들스틱: 위크(저가-고가) + 바디(시가-종가), 양봉=초록·음봉=빨강
                 _oc_color = _alt_dd.condition(
                     "datum.종가 >= datum.시가", _alt_dd.value("#22c55e"), _alt_dd.value("#ef4444"))
+                # 거래일 수에 맞춰 캔들·hover 폭 적응 (적을수록 굵게)
+                _n_cdl = max(len(_soxl_df), 1)
+                _body_px = max(7, min(30, int(660 / _n_cdl * 0.42)))
+                _hover_px = max(22, int(660 / _n_cdl * 0.96))
                 _soxl_wick = _alt_dd.Chart(_soxl_df).mark_rule(strokeWidth=1.4).encode(
                     x=_x_enc,
                     y=_alt_dd.Y("저가:Q", title="SOXL ($)", scale=_y_scale, axis=_alt_dd.Axis(format="$,.2f")),
                     y2="고가:Q", color=_oc_color, tooltip=_soxl_tip)
-                _soxl_body = _alt_dd.Chart(_soxl_df).mark_bar(size=11).encode(
+                _soxl_body = _alt_dd.Chart(_soxl_df).mark_bar(size=_body_px).encode(
                     x=_x_enc, y=_alt_dd.Y("시가:Q", scale=_y_scale), y2="종가:Q",
                     color=_oc_color, tooltip=_soxl_tip)
+                # 투명 hover 밴드: 거래일 컬럼 전체 높이를 덮어 '근처만 가도' OHLC 툴팁 표시
+                _soxl_hover = _alt_dd.Chart(_soxl_df).mark_rule(
+                    opacity=0, strokeWidth=_hover_px
+                ).encode(x=_x_enc, tooltip=_soxl_tip)
                 _soxl_line = _soxl_wick + _soxl_body   # (이름 유지) 캔들 = 위크+바디
 
                 # 선택일 강조: 수직선 + 링 마커 + 종가 라벨
@@ -2313,11 +2324,10 @@ elif page == "📔 매매일지":
                     }
                     (_buy_rows if _is_buy else _sell_rows).append(_row)
 
-                # 가격 패널 (라인 + 선택일 강조만 — 매매 마커는 아래 별도 스트립으로 분리해 겹침 제거)
-                # area 제외: mark_area가 0까지 채워 zero=False를 무력화 → 라인이 가격 범위에 꽉 차도록 라인만 사용
+                # 가격 패널 (캔들 + 선택일 강조 + 투명 hover 밴드 최상단으로 근처 호버 캐치)
                 _price_panel = _alt_dd.layer(
-                    _soxl_vrule, _soxl_line, _soxl_sel_dot, _soxl_sel_lbl
-                ).properties(height=200)
+                    _soxl_vrule, _soxl_line, _soxl_sel_dot, _soxl_sel_lbl, _soxl_hover
+                ).properties(height=220)
 
                 # 매매 마커: (날짜, 진입/청산)별 집계 → 2-레인 스트립 (같은 날 진입·청산이 겹치지 않음)
                 _LANES = ["▲ 진입", "▼ 청산"]
@@ -2340,8 +2350,8 @@ elif page == "📔 매매일지":
                         })
 
                 _sel_close_txt = f" · 선택일 종가 **${_sel_close:,.2f}**" if _sel_close is not None else ""
-                st.markdown(f"**🕯 SOXL 선택일 전후 캔들**{_sel_close_txt}")
-                st.caption("위=캔들(양봉🟢/음봉🔴, 호버로 OHLC·일중변동) · 아래 스트립 = 🟢▲ 진입(시가 대비 +돌파%) · 🔴▼ 청산(실현 수익률). 같은 날도 레인 분리, 호버로 상세")
+                st.markdown(f"**🕯 SOXL 선택일 전후 {_soxl_win}거래일 캔들**{_sel_close_txt}")
+                st.caption("위=캔들(양봉🟢/음봉🔴) — 컬럼 근처만 가도 OHLC·일중변동 툴팁 표시 · 아래 스트립 = 🟢▲ 진입(시가 대비 +돌파%) · 🔴▼ 청산(실현 수익률). 같은 날도 레인 분리. 전후 일수는 위 슬라이더로 조절")
 
                 if _strip_rows:
                     _strip_df = pd.DataFrame(_strip_rows)
