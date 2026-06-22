@@ -2209,6 +2209,10 @@ elif page == "📔 매매일지":
                 _x_enc_lbl = _alt_dd.X("날짜_표시:O", sort=_x_domain, title="날짜",
                                         axis=_alt_dd.Axis(labelAngle=0))
                 _soxl_df["일중%"] = ((_soxl_df["종가"] / _soxl_df["시가"] - 1) * 100).round(2)
+                _soxl_df["일중$"] = (_soxl_df["종가"] - _soxl_df["시가"]).round(2)
+                _soxl_df["일중변동"] = _soxl_df.apply(
+                    lambda _r: f"{'+' if _r['일중$'] >= 0 else '−'}${abs(_r['일중$']):,.2f} ({_r['일중%']:+.2f}%)",
+                    axis=1)
                 _y_scale = _alt_dd.Scale(zero=False, nice=True, padding=12)
                 _y_enc = _alt_dd.Y("종가:Q", title="SOXL ($)", scale=_y_scale,
                                     axis=_alt_dd.Axis(format="$,.2f"))
@@ -2219,8 +2223,8 @@ elif page == "📔 매매일지":
                     _alt_dd.Tooltip("고가:Q",       title="고가",        format="$,.2f"),
                     _alt_dd.Tooltip("저가:Q",       title="저가",        format="$,.2f"),
                     _alt_dd.Tooltip("종가:Q",       title="종가",        format="$,.2f"),
-                    _alt_dd.Tooltip("일중%:Q",      title="일중 변동(시가→종가)", format="+.2f"),
-                    _alt_dd.Tooltip("V1수익률:Q",   title="V1 수익률",   format="+.2f"),
+                    _alt_dd.Tooltip("일중변동:N",   title="일중 변동(시가→종가)"),
+                    _alt_dd.Tooltip("V1수익률:Q",   title="V1 수익률(%)", format="+.2f"),
                     _alt_dd.Tooltip("레짐:N",       title="레짐"),
                     _alt_dd.Tooltip("VIX:Q",        title="VIX",         format=".1f"),
                     _alt_dd.Tooltip("k값:Q",        title="k_today",     format=".3f"),
@@ -2305,15 +2309,20 @@ elif page == "📔 매매일지":
                             _detail += f" — 시가 ${_open_px:,.2f}에서 +{_brk:.2f}% 돌파 진입"
                         _lblval = f"+{_brk:.1f}%" if _brk is not None else "진입"
                     else:
-                        # 청산: 실현 수익률(leg-aware: long=exit-pps, short=exit+pps) + 손익$
-                        _ret = None
+                        # 청산: 평단(보유 평균단가, pnl/qty로 leg-aware 역산) → 청산가, 실현 수익률, 손익$
+                        _ret = None; _avg = None
                         if _px and _qty:
-                            _pps = _pnl_v / _qty
-                            _entry_est = (_px + _pps) if _leg == "SHORT" else (_px - _pps)
-                            if _entry_est:
-                                _ret = (_pps / _entry_est) * 100
-                        _detail = (f"{_strat_kor} {_act_kor} {_tkr} ${_px:,.2f} · 손익 ${_pnl_v:+,.0f}"
-                                   if _px else f"{_strat_kor} {_act_kor} {_tkr} · 손익 ${_pnl_v:+,.0f}")
+                            _pps = _pnl_v / _qty   # 주당 실현손익
+                            _avg = (_px + _pps) if _leg == "SHORT" else (_px - _pps)   # 평단
+                            if _avg:
+                                _ret = (_pps / _avg) * 100
+                        if _px and _avg is not None:
+                            _detail = (f"{_strat_kor} {_act_kor} {_tkr} · 평단 ${_avg:,.2f} → 청산 ${_px:,.2f}"
+                                       f" · 손익 ${_pnl_v:+,.0f}")
+                        elif _px:
+                            _detail = f"{_strat_kor} {_act_kor} {_tkr} 청산 ${_px:,.2f} · 손익 ${_pnl_v:+,.0f}"
+                        else:
+                            _detail = f"{_strat_kor} {_act_kor} {_tkr} · 손익 ${_pnl_v:+,.0f}"
                         if _ret is not None:
                             _detail += f" (수익률 {_ret:+.2f}%)"
                         _lblval = f"{_ret:+.1f}%" if _ret is not None else f"${_pnl_v:+,.0f}"
