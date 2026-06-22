@@ -264,13 +264,13 @@ with st.sidebar:
 """, unsafe_allow_html=True)
     _pages = [
         "📊 백테스트",
+        "📔 매매일지",
         "📈 위기 방어력",
         "🎲 확률 분포",
         "📅 연도별 성과",
         "🔄 기간별 안정성",
         "💰 실시간 현황",
         "🔬 백테 vs 페이퍼",
-        "📔 매매일지",
         "🔍 데이터 정확성",
         "📖 용어 사전",
     ]
@@ -2004,6 +2004,24 @@ elif page == "📔 매매일지":
     # ── 일별 현황 테이블 ──
     st.markdown("### 📋 일별 현황 (최신 날짜부터)")
 
+    def _why_no_trade(drow, brief=True):
+        """무거래 사유 추론 — 포지션 상태(현금비율)로 proximate reason 표기."""
+        try:
+            _eq = float(drow.get("CHAMP_equity", float("nan")))
+            _csh = float(drow.get("CHAMP_cash", float("nan")))
+        except Exception:
+            _eq = _csh = float("nan")
+        if pd.notna(_eq) and pd.notna(_csh) and _eq > 0:
+            _inv = (_eq - _csh) / _eq
+            if _inv < 0.02:
+                return "현금 대기" if brief else "현금 100% 대기 — 당일 진입(변동성 돌파) 신호 미발생"
+            elif _inv > 0.95:
+                return "풀보유 유지" if brief else "포지션 풀보유 — 청산 신호(LOC/MOO) 미도달"
+            else:
+                return (f"{_inv*100:.0f}% 보유" if brief
+                        else f"포지션 {_inv*100:.0f}% 보유 — 신규 진입/청산 신호 없음")
+        return "신호 없음" if brief else "당일 진입/청산 신호 없음"
+
     _rows = []
     for _date, _drow in _daily_rec.iloc[::-1].iterrows():
         _rg = _drow["regime"] if _has_rg else "—"
@@ -2018,7 +2036,7 @@ elif page == "📔 매매일지":
             _trade_str = f"✅ {int(_tr['건수'])}건 ({_tr['엔진']})"
             _pnl_str = f"${float(_tr['pnl']):+,.0f}"
         else:
-            _trade_str = "— 없음"
+            _trade_str = f"🚫 거래 없음 · {_why_no_trade(_drow)}"
             _pnl_str = "—"
 
         if _rg == "BULL":
@@ -2085,6 +2103,16 @@ elif page == "📔 매매일지":
   <span style="color:#94a3b8;font-size:0.88em">레짐: {_rg_emoji} {_rg_sel} &nbsp;·&nbsp; VIX: {f"{_vix_sel:.1f}" if not pd.isna(_vix_sel) else "—"} &nbsp;·&nbsp; k_today: {f"{_k_sel:.3f}" if not pd.isna(_k_sel) else "—"} &nbsp;·&nbsp; 엔진: {_act_sel}</span>
 </div>
 """, unsafe_allow_html=True)
+
+        # 선택일 거래 유무 + 사유
+        _sel_norm = _sel_ts.normalize()
+        if _sel_norm in _by_date.index:
+            _selt = _by_date.loc[_sel_norm]
+            st.success(f"✅ **{_sel_date_str} — 거래 {int(_selt['건수'])}건** · {_selt['엔진']} · 당일 P&L ${float(_selt['pnl']):+,.0f}")
+        else:
+            _sel_drow_j = _daily_j.loc[_sel_ts] if _sel_ts in _daily_j.index else None
+            _no_reason = _why_no_trade(_sel_drow_j, brief=False) if _sel_drow_j is not None else "데이터 없음"
+            st.warning(f"🚫 **{_sel_date_str} — 거래 없음** · 사유: {_no_reason}")
 
         import altair as _alt_dd
 
@@ -2154,6 +2182,8 @@ elif page == "📔 매매일지":
             if not _soxl_raw.empty:
                 _soxl_df = _soxl_raw.copy()
                 _soxl_df.columns = ["날짜", "시가", "고가", "저가", "종가"]
+                for _pc in ["시가", "고가", "저가", "종가"]:   # 가격 소수 2자리로
+                    _soxl_df[_pc] = _soxl_df[_pc].astype(float).round(2)
                 _soxl_df["날짜_str"] = pd.to_datetime(_soxl_df["날짜"]).dt.strftime("%Y-%m-%d")
                 _soxl_df["날짜_표시"] = pd.to_datetime(_soxl_df["날짜"]).dt.strftime("%m/%d")
                 _close_map = dict(zip(_soxl_df["날짜_str"], _soxl_df["종가"].astype(float)))
@@ -2172,33 +2202,48 @@ elif page == "📔 매매일지":
                 # SOXL 종가 라인 + 선택일 강조
                 _x_enc = _alt_dd.X("날짜_표시:O", sort=_x_domain, title="날짜",
                                     axis=_alt_dd.Axis(labelAngle=0))
-                _y_enc = _alt_dd.Y("종가:Q", title="SOXL 종가 ($)", scale=_alt_dd.Scale(zero=False))
+                _y_enc = _alt_dd.Y("종가:Q", title="SOXL 종가 ($)",
+                                    scale=_alt_dd.Scale(zero=False, nice=True, padding=18),
+                                    axis=_alt_dd.Axis(format="$,.2f"))
 
+                _soxl_tip = [
+                    _alt_dd.Tooltip("날짜_str:N",  title="날짜"),
+                    _alt_dd.Tooltip("종가:Q",       title="SOXL 종가",  format="$,.2f"),
+                    _alt_dd.Tooltip("시가:Q",       title="시가",        format="$,.2f"),
+                    _alt_dd.Tooltip("고가:Q",       title="고가",        format="$,.2f"),
+                    _alt_dd.Tooltip("저가:Q",       title="저가",        format="$,.2f"),
+                    _alt_dd.Tooltip("V1수익률:Q",   title="V1 수익률",   format="+.2f"),
+                    _alt_dd.Tooltip("레짐:N",       title="레짐"),
+                    _alt_dd.Tooltip("VIX:Q",        title="VIX",         format=".1f"),
+                    _alt_dd.Tooltip("k값:Q",        title="k_today",     format=".3f"),
+                ]
+                # 종가 라인 + 매 거래일 점
                 _soxl_line = _alt_dd.Chart(_soxl_df).mark_line(
-                    color="#60a5fa", strokeWidth=2.5
-                ).encode(
-                    x=_x_enc, y=_y_enc,
-                    tooltip=[
-                        _alt_dd.Tooltip("날짜_str:N",  title="날짜"),
-                        _alt_dd.Tooltip("종가:Q",       title="SOXL 종가",  format="$.2f"),
-                        _alt_dd.Tooltip("시가:Q",       title="시가",        format="$.2f"),
-                        _alt_dd.Tooltip("고가:Q",       title="고가",        format="$.2f"),
-                        _alt_dd.Tooltip("저가:Q",       title="저가",        format="$.2f"),
-                        _alt_dd.Tooltip("V1수익률:Q",   title="V1 수익률",   format="+.2f"),
-                        _alt_dd.Tooltip("레짐:N",       title="레짐"),
-                        _alt_dd.Tooltip("VIX:Q",        title="VIX",         format=".1f"),
-                        _alt_dd.Tooltip("k값:Q",        title="k_today",     format=".3f"),
-                    ],
-                )
+                    color="#60a5fa", strokeWidth=2.5,
+                    point=_alt_dd.OverlayMarkDef(color="#60a5fa", size=55, filled=True),
+                ).encode(x=_x_enc, y=_y_enc, tooltip=_soxl_tip)
                 _soxl_area = _alt_dd.Chart(_soxl_df).mark_area(
                     color="#60a5fa", opacity=0.08
                 ).encode(x=_x_enc, y=_y_enc)
 
-                # 선택일 배경 강조
-                _sel_soxl_row = _soxl_df[_soxl_df["날짜_str"] == _sel_date_str]
-                _soxl_sel_dot = _alt_dd.Chart(_sel_soxl_row).mark_point(
-                    size=180, color="#fbbf24", filled=True, opacity=0.85
-                ).encode(x=_x_enc, y=_y_enc) if not _sel_soxl_row.empty else _alt_dd.Chart(pd.DataFrame()).mark_point()
+                # 선택일 강조: 수직선 + 링 마커 + 종가 라벨
+                _sel_soxl_row = _soxl_df[_soxl_df["날짜_str"] == _sel_date_str].copy()
+                if not _sel_soxl_row.empty:
+                    _sel_close = float(_sel_soxl_row["종가"].iloc[0])
+                    _sel_soxl_row["종가라벨"] = _sel_soxl_row["종가"].apply(lambda v: f"${v:,.2f}")
+                    _soxl_vrule = _alt_dd.Chart(_sel_soxl_row).mark_rule(
+                        color="#fbbf24", strokeWidth=1.5, strokeDash=[5, 3], opacity=0.7
+                    ).encode(x=_x_enc)
+                    _soxl_sel_dot = _alt_dd.Chart(_sel_soxl_row).mark_point(
+                        size=240, color="#fbbf24", filled=False, strokeWidth=3
+                    ).encode(x=_x_enc, y=_y_enc, tooltip=_soxl_tip)
+                    _soxl_sel_lbl = _alt_dd.Chart(_sel_soxl_row).mark_text(
+                        dy=-16, color="#fbbf24", fontWeight="bold", fontSize=12
+                    ).encode(x=_x_enc, y=_y_enc, text="종가라벨:N")
+                else:
+                    _sel_close = None
+                    _empty_dd = _alt_dd.Chart(pd.DataFrame()).mark_point()
+                    _soxl_vrule = _soxl_sel_dot = _soxl_sel_lbl = _empty_dd
 
                 # 매매 시점 마커 빌드
                 _tw_soxl = _trades_j[
@@ -2243,7 +2288,7 @@ elif page == "📔 매매일지":
                     }
                     (_buy_rows if _is_buy else _sell_rows).append(_row)
 
-                _mk_charts = [_soxl_area, _soxl_line, _soxl_sel_dot]
+                _mk_charts = [_soxl_area, _soxl_vrule, _soxl_line]
                 for _mk_rows, _shape, _color in [
                     (_buy_rows,  "triangle-up",   "#22c55e"),
                     (_sell_rows, "triangle-down",  "#ef4444"),
@@ -2252,14 +2297,15 @@ elif page == "📔 매매일지":
                         _mk_df = pd.DataFrame(_mk_rows)
                         _mk_charts.append(
                             _alt_dd.Chart(_mk_df).mark_point(
-                                shape=_shape, size=150, filled=True, color=_color
+                                shape=_shape, size=200, filled=True, color=_color,
+                                stroke="white", strokeWidth=0.8,
                             ).encode(
                                 x=_alt_dd.X("날짜_표시:O", sort=_x_domain),
                                 y=_alt_dd.Y("가격:Q"),
                                 tooltip=[
                                     _alt_dd.Tooltip("날짜_str:N",  title="날짜"),
                                     _alt_dd.Tooltip("설명:N",      title="매매"),
-                                    _alt_dd.Tooltip("종가:Q",      title="SOXL 종가", format="$.2f"),
+                                    _alt_dd.Tooltip("종가:Q",      title="SOXL 종가", format="$,.2f"),
                                     _alt_dd.Tooltip("엔진:N",      title="엔진"),
                                     _alt_dd.Tooltip("종목:N",      title="종목"),
                                     _alt_dd.Tooltip("액션:N",      title="액션"),
@@ -2267,10 +2313,14 @@ elif page == "📔 매매일지":
                                 ],
                             )
                         )
+                # 선택일 링 + 종가 라벨을 최상단에
+                _mk_charts += [_soxl_sel_dot, _soxl_sel_lbl]
 
-                st.markdown("**📈 SOXL ±2 거래일** (🟡 선택일 · ▲ 진입 · ▼ 청산 / 호버로 상세)")
+                _sel_close_txt = f" · 선택일 종가 **${_sel_close:,.2f}**" if _sel_close is not None else ""
+                st.markdown(f"**📈 SOXL 선택일 전후 흐름**{_sel_close_txt}")
+                st.caption("🟡 선택일(수직선·링) · 🟢▲ 진입 · 🔴▼ 청산 · 점=거래일 종가 / 마우스 호버 시 상세")
                 st.altair_chart(
-                    _alt_dd.layer(*_mk_charts).properties(height=230),
+                    _alt_dd.layer(*_mk_charts).resolve_scale(y="shared").properties(height=260),
                     use_container_width=True,
                 )
         except Exception as _e_soxl:
