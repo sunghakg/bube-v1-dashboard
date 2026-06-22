@@ -2240,19 +2240,20 @@ elif page == "📔 매매일지":
         )
 
         # ── SOXL 캔들 + 매매 시점 마커 (전후 거래일 선택 가능) ──
-        # value= 대신 session_state 초기화 (value+key 충돌/경고 회피, 드래그 값 안정 반영)
+        # radio(클릭형)로 — 슬라이더보다 조작 확실, 한 번 클릭으로 창 변경
         st.session_state.setdefault("j2_soxl_win", 5)
-        st.select_slider(
-            "🕯 SOXL 캔들 전후 거래일", options=[3, 5, 7, 10, 15],
-            key="j2_soxl_win", help="선택일 기준 앞뒤로 보여줄 거래일 수 (넓힐수록 추세 맥락↑)")
+        st.radio("🕯 SOXL 캔들 전후 거래일", options=[3, 5, 7, 10, 15],
+                 horizontal=True, key="j2_soxl_win",
+                 format_func=lambda x: f"±{x}일",
+                 help="선택일 기준 앞뒤로 보여줄 거래일 수 (넓힐수록 추세 맥락↑)")
         _soxl_win = st.session_state["j2_soxl_win"]
         try:
             import yfinance as _yf
             @st.cache_data(ttl=3600)
-            def _fetch_soxl_ohlc(_ds, _w):
-                _d = pd.Timestamp(_ds)
-                _s = (_d - pd.offsets.BDay(_w + 1)).strftime("%Y-%m-%d")
-                _e = (_d + pd.offsets.BDay(_w + 1)).strftime("%Y-%m-%d")
+            def _fetch_soxl_ohlc(ds, w):   # ★인자명 밑줄 금지: st.cache_data가 _접두 인자를 해시 제외 → 날짜·창 미구분 캐시버그
+                _d = pd.Timestamp(ds)
+                _s = (_d - pd.offsets.BDay(w + 1)).strftime("%Y-%m-%d")
+                _e = (_d + pd.offsets.BDay(w + 1)).strftime("%Y-%m-%d")
                 _df = _yf.download("SOXL", start=_s, end=_e, auto_adjust=True,
                                    progress=False, multi_level_index=False)
                 if isinstance(_df.columns, pd.MultiIndex):
