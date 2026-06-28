@@ -129,16 +129,12 @@ st.markdown(f"""
 # Quick stats row — V1 CHAMP_NOMARGIN 16y headline
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("16년 Calmar", f"{H_CHAMP['Calmar']:.2f}",
-            f"BASE {H_BASE['Calmar']:.2f} · +{H_CHAMP['Calmar']-H_BASE['Calmar']:.2f}",
-            help="Calmar = CAGR ÷ |MDD|. 낙폭 대비 수익 효율성. 1.0 이상 양호, 2.0 이상 우수. BASE = VIX 조정 없이 고정 비중 운영 시.")
+            help="Calmar = CAGR ÷ |MDD|. 낙폭 대비 수익 효율성. 1.0 이상 양호, 2.0 이상 우수.")
 col2.metric("16년 CAGR (연복리)", f"{H_CHAMP['CAGR']:.2f}%",
-            f"BASE {H_BASE['CAGR']:.2f}% · +{H_CHAMP['CAGR']-H_BASE['CAGR']:.2f}pp",
             help="CAGR = 연평균 복리 수익률. 16년 전체를 복리로 환산했을 때의 연간 평균 수익률.")
 col3.metric("16년 MDD (최대낙폭)", f"{H_CHAMP['MDD']:.2f}%",
-            f"BASE {H_BASE['MDD']:.2f}% · {H_CHAMP['MDD']-H_BASE['MDD']:.2f}pp 개선",
             help="MDD = Maximum Drawdown. 고점 대비 최대 하락폭. 절댓값이 작을수록 좋음.")
 col4.metric("$10만 → 최종 (16년)", _money(H_CHAMP['Final_mult'] * 100_000),
-            f"×{H_CHAMP['Final_mult']/H_BASE['Final_mult']:.1f} BASE",
             help="$100,000 시드로 2010년부터 시작했을 때의 백테스트 최종 자산. in-sample 단일 경로 기준 (bootstrap 중앙값은 더 낮음).")
 
 # ── 기간별 비교 ──────────────────────────────────────────────
@@ -342,7 +338,7 @@ if page == "📊 백테스트":
         with st.expander("📐 기술 스펙 보기 (코드)", expanded=True):
          st.code(f"""
 # Strategy: V1 CHAMP_NOMARGIN (no-margin variant)
-# = BASE BUBE rotation × VIX dynamic-k overlay × alloc cap 1.0
+# = 엔진 로테이션 × VIX dynamic-k overlay × alloc cap 1.0
 
 # Overlay 수식
 k_today    = base_k × scale_today
@@ -356,7 +352,7 @@ VIX 20  → scale 1.0 → k=0.60 → alloc 0.60×strat  (중립)
 VIX 40  → scale 0.5 → k=0.30 → alloc 0.30×strat (고변동성 디리스킹)
 VIX 80  → scale 0.5 → 동일 (lo clip)
 
-# BASE BUBE rotation (sub-strategy mapping)
+# 엔진 로테이션 (sub-strategy mapping)
 BULL / NEUTRAL          → 롱변기      (SOXL only)
 BEAR                    → 양변기 v5  (SOXL+SOXS pair, F1_A6 LOC)
 BEAR streak > 90일      → 황금변기   (SOXL K-vol breakout)
@@ -375,28 +371,18 @@ max_bear   = 90일 (GOLD_ESCAPE 트리거)
 """, language="python")
 
     with col_b:
-        st.markdown("### 16년 백테스트 결과 비교")
-        ha1, ha2 = st.columns(2)
-        ha1.metric("V1 전략 (VIX 동적 비중)", "")
-        ha1.markdown(f"""
+        st.markdown("### 16년 백테스트 결과 (V1 CHAMP_NOMARGIN)")
+        st.markdown(f"""
 - **CAGR** (연복리): `{H_CHAMP['CAGR']:.2f}%`
 - **MDD** (최대낙폭): `{H_CHAMP['MDD']:.2f}%`
 - **Sharpe** (위험조정 수익): `{H_CHAMP['Sharpe']:.2f}`
 - **Calmar** (수익÷낙폭): `{H_CHAMP['Calmar']:.2f}`
 - **최종 자산** ($10만 시드): `{_money(H_CHAMP['Final_mult']*100_000)}`
 """)
-        ha2.metric("BASE (고정 비중, 비교 기준)", "")
-        ha2.markdown(f"""
-- **CAGR**: `{H_BASE['CAGR']:.2f}%`
-- **MDD**: `{H_BASE['MDD']:.2f}%`
-- **Sharpe**: `{H_BASE['Sharpe']:.2f}`
-- **Calmar**: `{H_BASE['Calmar']:.2f}`
-- **최종 자산**: `{_money(H_BASE['Final_mult']*100_000)}`
-""")
 
         st.markdown("### 전략 검증 결과")
         check_data = [
-            ("16y 단일 path", f"Calmar {H_CHAMP['Calmar']:.2f} vs BASE {H_BASE['Calmar']:.2f}", "✅"),
+            ("16y 단일 path", f"Calmar {H_CHAMP['Calmar']:.2f}", "✅"),
             ("Bootstrap 5,000",
              f"p50 Cal {H_BOOT['cal_p50']:.2f}, p05 {H_BOOT['cal_p05']:.2f} 이상",
              "✅"),
@@ -404,7 +390,7 @@ max_bear   = 90일 (GOLD_ESCAPE 트리거)
             ("MDD 분포", f"p50 {H_BOOT['mdd_p50']:.2f}%, P(MDD<-30%)={H_BOOT['p_mdd_worse_than_30']:.2f}%", "⚠️"),
             ("CAGR 양수 확률", f"P(CAGR>0)={H_BOOT['p_cagr_positive']:.2f}%, P(CAGR>30%)={H_BOOT['p_cagr_above_30']:.2f}%", "✅"),
             ("margin 사용", "alloc_cap 1.0 → 합법 cash sleeve, leverage 0%", "✅"),
-            ("Final $", f"$100K → {_money(H_CHAMP['Final_mult']*100_000)} (×{H_CHAMP['Final_mult']/H_BASE['Final_mult']:.1f} BASE)", "✅"),
+            ("Final $", f"$100K → {_money(H_CHAMP['Final_mult']*100_000)}", "✅"),
         ]
         for name, desc, mark in check_data:
             st.markdown(f"**{mark} {name}** — {desc}")
@@ -465,7 +451,6 @@ max_bear   = 90일 (GOLD_ESCAPE 트리거)
 
     _seed_bt = 100_000.0
     _s = float(_eq_slice["CHAMP_NOMARGIN"].iloc[0])
-    _b = float(_eq_slice["BASE"].iloc[0])
 
     # 기간 내 통계
     _n_yr = (_eq_slice.index[-1] - _eq_slice.index[0]).days / 365.25
@@ -486,87 +471,72 @@ max_bear   = 90일 (GOLD_ESCAPE 트리거)
     # Altair 차트 — 툴팁 달러 포맷
     import altair as alt
     _v1_vals = (_eq_slice["CHAMP_NOMARGIN"] / _s * _seed_bt).values
-    _bs_vals = (_eq_slice["BASE"] / _b * _seed_bt).values
     _chart_df = pd.DataFrame({
-        "날짜": list(_eq_slice.index) * 2,
-        "자산": list(_v1_vals) + list(_bs_vals),
-        "전략": ["V1 CHAMP_NOMARGIN"] * len(_v1_vals) + ["BASE k=0.60"] * len(_bs_vals),
+        "날짜": list(_eq_slice.index),
+        "자산": list(_v1_vals),
     })
     _eq_altair = (
         alt.Chart(_chart_df)
-        .mark_line(strokeWidth=1.5)
+        .mark_line(strokeWidth=2, color="#34A5C5")
         .encode(
             x=alt.X("날짜:T", title="날짜"),
             y=alt.Y("자산:Q", title="자산 ($)", axis=alt.Axis(format="$,.0f")),
-            color=alt.Color("전략:N", scale=alt.Scale(
-                domain=["V1 CHAMP_NOMARGIN", "BASE k=0.60"],
-                range=["#34A5C5", "#4C566A"])),
             tooltip=[
                 alt.Tooltip("날짜:T", title="날짜", format="%Y-%m-%d"),
-                alt.Tooltip("전략:N", title="전략"),
                 alt.Tooltip("자산:Q", title="자산", format="$,.0f"),
             ],
         )
         .properties(height=400)
     )
     st.altair_chart(_eq_altair, use_container_width=True)
-    st.caption("V1 CHAMP_NOMARGIN vs 고정비중 BASE(k=0.60). 구간 시작 기준 $10만으로 재조정.")
+    st.caption("V1 CHAMP_NOMARGIN 자산 곡선. 구간 시작 기준 $10만으로 재조정.")
 
 
 # ───────────────────────────────────────────────────────────
 # TAB 3: Stress Tests
 # ───────────────────────────────────────────────────────────
 elif page == "📈 위기 방어력":
-    st.subheader("📈 위기 구간 방어력 — 8개 위기 × V1 vs BASE")
-    st.caption("코로나·금리쇼크 등 실제 위기 구간에서 VIX 동적 비중 조절이 낙폭을 얼마나 줄였는지 확인.")
+    st.subheader("📈 위기 구간 방어력 — 8개 위기에서 V1 성과")
+    st.caption("코로나·금리쇼크 등 실제 위기 구간에서 V1(VIX 동적 비중)의 수익률과 낙폭(MDD).")
 
     crisis_path = CHAMP / "crisis.csv"
     if crisis_path.exists():
         cr = pd.read_csv(crisis_path)
-        # Display columns
-        disp = cr.copy()
-        disp["BASE_ret_%"] = disp["BASE_ret_%"].apply(lambda x: f"{x:+.2f}%")
-        disp["BASE_mdd_%"] = disp["BASE_mdd_%"].apply(lambda x: f"{x:+.2f}%")
+        # Display columns — V1(CHAMP)만 표시
+        disp = cr[["crisis", "from", "to", "CHAMP_ret_%", "CHAMP_mdd_%"]].copy()
         disp["CHAMP_ret_%"] = disp["CHAMP_ret_%"].apply(lambda x: f"{x:+.2f}%")
         disp["CHAMP_mdd_%"] = disp["CHAMP_mdd_%"].apply(lambda x: f"{x:+.2f}%")
-        disp["Δ_ret_pp"] = disp["Δ_ret_pp"].apply(lambda x: f"{x:+.2f}pp")
-        disp["Δ_mdd_pp"] = disp["Δ_mdd_pp"].apply(lambda x: f"{x:+.2f}pp")
-        disp.columns = ["Crisis", "From", "To",
-                        "BASE Ret", "BASE MDD",
-                        "CHAMP Ret", "CHAMP MDD",
-                        "Δ Ret", "Δ MDD (개선)"]
+        disp.columns = ["Crisis", "From", "To", "V1 Ret", "V1 MDD"]
         st.dataframe(disp, use_container_width=True, hide_index=True)
 
-        # Summary stats
-        mdd_improved = (cr["Δ_mdd_pp"] > 0).sum()
-        mdd_total = len(cr)
-        avg_mdd_delta = cr["Δ_mdd_pp"].mean()
-        avg_ret_delta = cr["Δ_ret_pp"].mean()
-        n_wins = ((cr["Δ_ret_pp"] > 0) & (cr["Δ_mdd_pp"] > 0)).sum()
+        # Summary stats — V1 절대 기준
+        n_total = len(cr)
+        avg_mdd = cr["CHAMP_mdd_%"].mean()
+        worst_mdd = cr["CHAMP_mdd_%"].min()
+        worst_row = cr.loc[cr["CHAMP_mdd_%"].idxmin()]
+        n_pos = int((cr["CHAMP_ret_%"] > 0).sum())
 
         sc1, sc2, sc3, sc4 = st.columns(4)
-        sc1.metric("위기 수", f"{mdd_total}")
-        sc2.metric("MDD 개선 비율", f"{mdd_improved}/{mdd_total}",
-                   f"{mdd_improved/mdd_total*100:.0f}%")
-        sc3.metric("평균 Δ MDD", f"{avg_mdd_delta:+.2f}pp",
-                   "양수 = CHAMP가 MDD 줄였음")
-        sc4.metric("평균 Δ Ret", f"{avg_ret_delta:+.2f}pp",
-                   "위기 구간 alpha")
+        sc1.metric("위기 수", f"{n_total}")
+        sc2.metric("평균 위기 MDD", f"{avg_mdd:+.2f}%", "위기 구간 평균 낙폭")
+        sc3.metric("최악 위기 MDD", f"{worst_mdd:+.2f}%", str(worst_row["crisis"]))
+        sc4.metric("플러스 수익 위기", f"{n_pos}/{n_total}",
+                   "위기 중에도 수익난 횟수")
 
         st.info(
-            f"💡 **8개 위기 중 {mdd_improved}개**에서 CHAMP_NOMARGIN이 BASE보다 MDD 더 작음 (평균 {avg_mdd_delta:+.2f}pp 개선). "
-            f"VIX가 폭등하는 위기 시작 구간에 scale가 0.5로 clip되어 alloc 자동 축소 → 손실 제한. "
-            f"V-recovery 구간에서는 VIX 하락 → scale 1.5~2.0으로 풀로딩 회복."
+            "💡 VIX가 폭등하는 위기 시작 구간에 scale가 0.5로 clip되어 alloc이 자동 축소 → 손실 제한. "
+            "V-recovery 구간에서는 VIX 하락 → scale 1.5~2.0으로 풀로딩 회복. "
+            "이 자동 디리스킹이 V1의 위기 방어 메커니즘."
         )
 
-        # 2020 Covid recovery 케이스 별도 강조 (CHAMP가 손해본 케이스)
+        # 2020 Covid recovery 케이스 — 방어의 trade-off
         cov_rec = cr[cr["crisis"] == "2020 Covid recovery"]
         if len(cov_rec) > 0:
             r = cov_rec.iloc[0]
             st.warning(
-                f"⚠️ **2020 Covid recovery**: BASE {r['BASE_ret_%']:+.2f}% vs CHAMP {r['CHAMP_ret_%']:+.2f}% "
-                f"({r['Δ_ret_pp']:+.2f}pp underperform) — VIX가 30~40 구간 머무를 때 scale<1로 풀로딩 못함 → "
-                f"V-recovery upside 일부 놓침. **trade-off**: 위기 시작 MDD 보호 대가."
+                f"⚠️ **2020 Covid recovery**: V1 {r['CHAMP_ret_%']:+.2f}% — VIX가 30~40 구간에 머무를 때 "
+                f"scale<1로 풀로딩 못함 → V-recovery upside 일부 놓침. "
+                f"**trade-off**: 위기 시작 MDD 보호의 대가."
             )
     else:
         st.warning("champ_nomargin/crisis.csv 없음.")
@@ -657,13 +627,13 @@ elif page == "🎲 확률 분포":
 # TAB 5: Year-by-Year
 # ───────────────────────────────────────────────────────────
 elif page == "📅 연도별 성과":
-    st.subheader("📅 연도별 성과 — 17년 🏆 CHAMP(우리 매매법) vs BASE")
+    st.subheader("📅 연도별 성과 — 17년 V1 CHAMP(우리 매매법)")
     st.markdown(
         "<div style='background:#3B4252;border-left:4px solid #34A5C5;padding:10px 16px;border-radius:8px;"
         "margin-bottom:12px;color:#E5E9F0;line-height:1.6'>"
         "<b style='color:#88C0D0'>🏆 CHAMP_NOMARGIN = 우리가 실제로 운영하는 V1 매매법</b> "
-        "(VIX 동적 비중). 아래 <b style='color:#88C0D0'>파란 칸</b>이 우리 성과이고, BASE(고정 비중)는 비교 기준선입니다. "
-        "<b>🏆 표시 연도 = CHAMP가 BASE를 이긴 해</b>.</div>",
+        "(VIX 동적 비중). 연도별 수익률·MDD·Sharpe·연말자본을 보여줍니다. "
+        "아래 막대를 클릭하면 그 해 월별 성과가 표시됩니다.</div>",
         unsafe_allow_html=True,
     )
 
@@ -677,62 +647,50 @@ elif page == "📅 연도별 성과":
         if SHOW_V2 and v2_yp.exists():
             v2_yearly = pd.read_csv(v2_yp).set_index("year")
 
-        # Build display — CHAMP(우리 매매법) 우선 배치, BASE는 비교 기준
+        # Build display — V1 CHAMP만 표시
         rows = []
         for _, r in y.iterrows():
             yr_int = int(r["year"])
-            _win = "🏆" if r["Δ_ret_pp"] > 1e-9 else ("=" if abs(r["Δ_ret_pp"]) <= 1e-9 else "·")
             row = {
                 "연도": yr_int,
-                "🏆": _win,
-                "CHAMP 수익": f"{r['CHAMP_ret_%']:+.2f}%",
-                "CHAMP MDD": f"{r['CHAMP_mdd_%']:+.2f}%",
-                "CHAMP Sharpe": f"{r['CHAMP_sharpe']:.2f}",
-                "CHAMP 연말자본": _money(r["CHAMP_end_$"]),
-                "BASE 수익": f"{r['BASE_ret_%']:+.2f}%",
-                "BASE MDD": f"{r['BASE_mdd_%']:+.2f}%",
-                "Δ수익 (우위)": f"{r['Δ_ret_pp']:+.2f}pp",
-                "Δ MDD (우위)": f"{r['Δ_mdd_pp']:+.2f}pp",
+                "수익률": f"{r['CHAMP_ret_%']:+.2f}%",
+                "MDD": f"{r['CHAMP_mdd_%']:+.2f}%",
+                "Sharpe": f"{r['CHAMP_sharpe']:.2f}",
+                "연말자본": _money(r["CHAMP_end_$"]),
             }
-            if v2_yearly is not None and yr_int in v2_yearly.index:
-                row["V2 수익"] = f"{v2_yearly.loc[yr_int, 'V2_FINAL_ret']:+.2f}%"
             rows.append(row)
         df_year = pd.DataFrame(rows)
 
-        _champ_cols = ["CHAMP 수익", "CHAMP MDD", "CHAMP Sharpe", "CHAMP 연말자본"]
-        _delta_cols = ["Δ수익 (우위)", "Δ MDD (우위)"]
-
-        def _delta_clr(v):
+        def _ret_clr(v):
             if isinstance(v, str) and v.startswith("+"): return "color:#A3BE8C;font-weight:600"
             if isinstance(v, str) and v.startswith("-"): return "color:#BF616A"
             return ""
 
         _sty = (
             df_year.style
-            .set_properties(subset=_champ_cols, **{"background-color": "#3B4252", "color": "#88C0D0", "font-weight": "700"})
-            .set_properties(subset=["🏆"], **{"text-align": "center", "font-size": "1.1em"})
-            .map(_delta_clr, subset=_delta_cols)
+            .set_properties(subset=["수익률", "MDD", "Sharpe", "연말자본"],
+                            **{"background-color": "#3B4252", "color": "#88C0D0", "font-weight": "700"})
+            .map(_ret_clr, subset=["수익률"])
         )
         st.dataframe(_sty, use_container_width=True, hide_index=True, height=(len(df_year) + 1) * 35 + 3)
-        st.caption("💙 파란 칸 = CHAMP(우리 매매법) · 🏆 = 그 해 CHAMP가 BASE 수익률 초과 · Δ 초록 = CHAMP 우위."
-                   + (" · V2는 연구용(미운영)." if v2_yearly is not None else ""))
+        st.caption("V1 CHAMP_NOMARGIN 연도별 성과 (VIX 동적 비중).")
 
-        # Summary
-        wins_ret = (y["Δ_ret_pp"] > 0).sum()
-        wins_mdd = (y["Δ_mdd_pp"] > 0).sum()
-        avg_ret = y["Δ_ret_pp"].mean()
-        avg_mdd = y["Δ_mdd_pp"].mean()
+        # Summary — V1 절대 기준
         total = len(y)
+        pos_years = int((y["CHAMP_ret_%"] > 0).sum())
+        best_row = y.loc[y["CHAMP_ret_%"].idxmax()]
+        worst_row = y.loc[y["CHAMP_ret_%"].idxmin()]
+        avg_yr_ret = y["CHAMP_ret_%"].mean()
 
         st.markdown("---")
         yc1, yc2, yc3, yc4 = st.columns(4)
         yc1.metric("총 연도", f"{total}")
-        yc2.metric("CHAMP > BASE (Ret)", f"{wins_ret}/{total}",
-                   f"{wins_ret/total*100:.0f}%")
-        yc3.metric("CHAMP > BASE (MDD)", f"{wins_mdd}/{total}",
-                   f"{wins_mdd/total*100:.0f}%")
-        yc4.metric("평균 Δ Ret / Δ MDD",
-                   f"{avg_ret:+.2f}pp / {avg_mdd:+.2f}pp")
+        yc2.metric("플러스 수익 연도", f"{pos_years}/{total}",
+                   f"{pos_years/total*100:.0f}%")
+        yc3.metric("평균 연 수익률", f"{avg_yr_ret:+.1f}%")
+        yc4.metric("최고 / 최저 연",
+                   f"{int(best_row['year'])} / {int(worst_row['year'])}",
+                   f"{best_row['CHAMP_ret_%']:+.0f}% / {worst_row['CHAMP_ret_%']:+.0f}%")
 
         # ── 연도별 CHAMP 수익률 (막대 클릭 → 그 해 월별 막대차트) ──────────
         st.markdown("---")
@@ -806,49 +764,28 @@ elif page == "📅 연도별 성과":
             st.info(f"{_y5_sel_year}년 월별 데이터가 없습니다.")
         st.markdown("---")
 
-        # Yearly equity chart
-        st.markdown("### 📈 연말 자본 ($100K 시드 기준) — 🏆 CHAMP 강조")
+        # Yearly equity chart — V1만
+        st.markdown("### 📈 연말 자본 ($100K 시드 기준)")
         import altair as _alt
-        _CHAMP_LBL = "🏆 CHAMP (우리 매매법)"; _BASE_LBL = "BASE (고정 0.60)"
         _cy_df = pd.DataFrame({
-            "연도": list(y["year"].astype(int).values) * 2,
-            "자산": list(y["CHAMP_end_$"].values) + list(y["BASE_end_$"].values),
-            "전략": [_CHAMP_LBL] * len(y) + [_BASE_LBL] * len(y),
+            "연도": y["year"].astype(int).values,
+            "자산": y["CHAMP_end_$"].values,
         })
         st.altair_chart(
-            _alt.Chart(_cy_df).mark_line(point=True).encode(
+            _alt.Chart(_cy_df).mark_line(point=True, strokeWidth=3, color="#34A5C5").encode(
                 x=_alt.X("연도:O", title="연도"),
                 y=_alt.Y("자산:Q", title="자산 ($)", axis=_alt.Axis(format="$,.0f")),
-                color=_alt.Color("전략:N", scale=_alt.Scale(
-                    domain=[_CHAMP_LBL, _BASE_LBL], range=["#34A5C5", "#9AA5B8"]),
-                    legend=_alt.Legend(title=None, orient="top")),
-                strokeWidth=_alt.StrokeWidth("전략:N", scale=_alt.Scale(
-                    domain=[_CHAMP_LBL, _BASE_LBL], range=[3.5, 1.5]), legend=None),
                 tooltip=[_alt.Tooltip("연도:O", title="연도"),
-                         _alt.Tooltip("전략:N", title="전략"),
                          _alt.Tooltip("자산:Q", title="자산", format="$,.0f")],
             ).properties(height=320),
             use_container_width=True,
         )
 
-        # Δ ret bar
-        st.markdown("### 📊 연도별 Δ Return (CHAMP − BASE, pp)")
-        import altair as _alt
-        _dr_df = pd.DataFrame({"연도": y["year"].astype(int).values, "Δ Ret pp": y["Δ_ret_pp"].values})
-        st.altair_chart(
-            _alt.Chart(_dr_df).mark_bar().encode(
-                x=_alt.X("연도:O", title="연도"),
-                y=_alt.Y("Δ Ret pp:Q", title="Δ Return (pp)"),
-                color=_alt.condition(_alt.datum["Δ Ret pp"] >= 0, _alt.value("#A3BE8C"), _alt.value("#BF616A")),
-                tooltip=[_alt.Tooltip("연도:O", title="연도"),
-                         _alt.Tooltip("Δ Ret pp:Q", title="Δ Ret", format="+.2f")],
-            ).properties(height=240),
-            use_container_width=True,
-        )
-
         st.success(
-            f"💡 **17년 중 {wins_ret}년**에서 CHAMP > BASE (수익률 기준). 평균 +{avg_ret:.2f}pp/yr alpha. "
-            f"MDD는 {wins_mdd}/{total}년에서 CHAMP가 더 작음 — VIX dynamic-k overlay가 단순 운빨이 아닌 일관 효과."
+            f"💡 **17년 중 {pos_years}년**에서 플러스 수익 (평균 연 {avg_yr_ret:+.1f}%). "
+            f"최고 {int(best_row['year'])}년 {best_row['CHAMP_ret_%']:+.0f}% · "
+            f"최저 {int(worst_row['year'])}년 {worst_row['CHAMP_ret_%']:+.0f}% — "
+            f"VIX dynamic-k overlay로 낙폭을 통제하며 복리 성장."
         )
     else:
         st.warning("champ_nomargin/yearly.csv 없음.")
@@ -859,46 +796,36 @@ elif page == "📅 연도별 성과":
 # ───────────────────────────────────────────────────────────
 elif page == "🔄 기간별 안정성":
     st.subheader("🔄 기간별 안정성 — 1년~16년 윈도우 검증")
-    st.caption("최근 1년, 2년, 5년, 16년 등 다양한 기간에서도 V1이 일관되게 BASE보다 우월한지 확인. 특정 기간 cherry-pick이 아님을 검증.")
+    st.caption("최근 1년, 2년, 5년, 16년 등 다양한 기간에서 V1의 Calmar·CAGR이 일관되게 견조한지 확인. 특정 기간 cherry-pick이 아님을 검증.")
 
     swp = CHAMP / "summary_wide.csv"
     if swp.exists():
         sw = pd.read_csv(swp)
-        # 표시
-        disp = sw.copy()
+        # 표시 — V1(CHAMP)만
+        disp = sw[["window", "years", "CHAMP_CAGR_%", "CHAMP_MDD_%",
+                   "CHAMP_Sharpe", "CHAMP_Calmar", "CHAMP_Final_$"]].copy()
         disp["years"] = disp["years"].round(2)
-        for c in ("BASE_CAGR_%", "CHAMP_CAGR_%", "Δ_CAGR_pp",
-                  "BASE_MDD_%", "CHAMP_MDD_%", "Δ_MDD_pp"):
-            if c in disp.columns:
-                disp[c] = disp[c].apply(lambda x: f"{x:+.2f}%" if "pp" not in c else f"{x:+.2f}pp")
-        for c in ("BASE_Sharpe", "CHAMP_Sharpe", "BASE_Calmar", "CHAMP_Calmar", "Δ_Calmar"):
-            if c in disp.columns:
-                disp[c] = disp[c].apply(lambda x: f"{x:+.2f}" if "Δ" in c else f"{x:.2f}")
-        for c in ("BASE_Final_$", "CHAMP_Final_$"):
-            if c in disp.columns:
-                disp[c] = disp[c].apply(_money)
-        if "Final_ratio" in disp.columns:
-            disp["Final_ratio"] = disp["Final_ratio"].apply(lambda x: f"×{x:.2f}")
+        disp["CHAMP_CAGR_%"] = disp["CHAMP_CAGR_%"].apply(lambda x: f"{x:+.2f}%")
+        disp["CHAMP_MDD_%"] = disp["CHAMP_MDD_%"].apply(lambda x: f"{x:+.2f}%")
+        disp["CHAMP_Sharpe"] = disp["CHAMP_Sharpe"].apply(lambda x: f"{x:.2f}")
+        disp["CHAMP_Calmar"] = disp["CHAMP_Calmar"].apply(lambda x: f"{x:.2f}")
+        disp["CHAMP_Final_$"] = disp["CHAMP_Final_$"].apply(_money)
+        disp.columns = ["윈도우", "연수", "CAGR", "MDD", "Sharpe", "Calmar", "최종자본"]
         st.dataframe(disp, use_container_width=True, hide_index=True)
 
         st.markdown("---")
-        # Calmar trajectory across windows
+        # Calmar trajectory across windows — V1만
         st.markdown("### 📈 Window별 Calmar 추이")
         import altair as _alt
         _cal_df = pd.DataFrame({
-            "window": list(sw["window"].values) * 2,
-            "Calmar": list(sw["BASE_Calmar"].values) + list(sw["CHAMP_Calmar"].values),
-            "전략": ["BASE k=0.60"] * len(sw) + ["V1 CHAMP_NOMARGIN"] * len(sw),
+            "window": sw["window"].values,
+            "Calmar": sw["CHAMP_Calmar"].values,
         })
         st.altair_chart(
-            _alt.Chart(_cal_df).mark_bar().encode(
+            _alt.Chart(_cal_df).mark_bar(color="#34A5C5").encode(
                 x=_alt.X("window:N", title="윈도우", sort=None),
                 y=_alt.Y("Calmar:Q", title="Calmar"),
-                color=_alt.Color("전략:N", scale=_alt.Scale(
-                    domain=["V1 CHAMP_NOMARGIN", "BASE k=0.60"], range=["#34A5C5", "#4C566A"])),
-                xOffset=_alt.XOffset("전략:N"),
                 tooltip=[_alt.Tooltip("window:N", title="윈도우"),
-                         _alt.Tooltip("전략:N", title="전략"),
                          _alt.Tooltip("Calmar:Q", title="Calmar", format=".2f")],
             ).properties(height=300),
             use_container_width=True,
@@ -907,31 +834,27 @@ elif page == "🔄 기간별 안정성":
         st.markdown("### 📈 Window별 CAGR")
         import altair as _alt
         _cg_df = pd.DataFrame({
-            "window": list(sw["window"].values) * 2,
-            "CAGR (%)": list(sw["BASE_CAGR_%"].values) + list(sw["CHAMP_CAGR_%"].values),
-            "전략": ["BASE k=0.60"] * len(sw) + ["V1 CHAMP_NOMARGIN"] * len(sw),
+            "window": sw["window"].values,
+            "CAGR (%)": sw["CHAMP_CAGR_%"].values,
         })
         st.altair_chart(
-            _alt.Chart(_cg_df).mark_bar().encode(
+            _alt.Chart(_cg_df).mark_bar(color="#34A5C5").encode(
                 x=_alt.X("window:N", title="윈도우", sort=None),
                 y=_alt.Y("CAGR (%):Q", title="CAGR (%)"),
-                color=_alt.Color("전략:N", scale=_alt.Scale(
-                    domain=["V1 CHAMP_NOMARGIN", "BASE k=0.60"], range=["#34A5C5", "#4C566A"])),
-                xOffset=_alt.XOffset("전략:N"),
                 tooltip=[_alt.Tooltip("window:N", title="윈도우"),
-                         _alt.Tooltip("전략:N", title="전략"),
                          _alt.Tooltip("CAGR (%):Q", title="CAGR", format="+.2f")],
             ).properties(height=300),
             use_container_width=True,
         )
 
-        # All windows CHAMP > BASE?
-        all_calmar = (sw["CHAMP_Calmar"] > sw["BASE_Calmar"]).all()
-        all_cagr = (sw["CHAMP_CAGR_%"] > sw["BASE_CAGR_%"]).all()
+        # V1 일관성 — 모든 window 양호?
+        min_cal = float(sw["CHAMP_Calmar"].min())
+        min_cagr = float(sw["CHAMP_CAGR_%"].min())
+        all_pos = bool((sw["CHAMP_CAGR_%"] > 0).all())
         st.success(
-            f"✅ **Calmar 모든 window CHAMP > BASE**: {all_calmar} · "
-            f"**CAGR 모든 window CHAMP > BASE**: {all_cagr}. "
-            f"단일 window cherry-pick 아닌 1y~16y 전체에서 일관 우월 → over-fit 가능성 낮음."
+            f"✅ **모든 window에서 CAGR 양수**: {all_pos} · "
+            f"최저 Calmar {min_cal:.2f} · 최저 CAGR {min_cagr:+.1f}%. "
+            f"단일 window cherry-pick이 아닌 1y~16y 전체에서 일관 견조 → over-fit 가능성 낮음."
         )
     else:
         st.warning("champ_nomargin/summary_wide.csv 없음.")
@@ -952,7 +875,7 @@ elif page == "💰 실시간 현황":
   <div style="font-size:1.1em;font-weight:600;margin-bottom:8px">🏆 V1 CHAMP_NOMARGIN Overlay (운영 중)</div>
   <div style="opacity:0.92;line-height:1.7">
     <b>k_today</b> = 0.60 × clip(20.0 / VIX_today, 0.5, 2.0), <b>alloc_today</b> = min(k × strat_alloc, 1.0) &nbsp;<span style="opacity:0.7">(baseline 0.60 — 2026-06-07 디리스킹)</span><br>
-    BASE: <b>BULL/NEUTRAL</b> 롱변기 · <b>BEAR</b> 양변기 v5 · <b>BEAR streak &gt; 90d</b> 황금변기<br>
+    엔진 로테이션: <b>BULL/NEUTRAL</b> 롱변기 · <b>BEAR</b> 양변기 v5 · <b>BEAR streak &gt; 90d</b> 황금변기<br>
     <b>갭필터 A안(비대칭, 2026-06-03)</b>: 롱변기·양변기롱 갭다운만 차단 · 양변기숏 대칭<br>
     <b>Regime</b>: Consensus 3-SMA200 (QQQ/SPY/SMH ±2%, 2-of-3) + Fast BEAR OR (VIX9D/VIX&gt;1.05 OR SOXL 5d mom&lt;-10%), dwell=5d
   </div>
@@ -1246,7 +1169,7 @@ elif page == "💰 실시간 현황":
         import datetime as _dtt
         # 운영 수정 이력 (라이브 봇/백테에 실제 적용한 변경)
         _fix_events = [
-            ("2026-05-26", "🚀 V1 CHAMP_NOMARGIN 전환", "T2 GOLD_ESCAPE(bm=90) → V1 CHAMP (BASE 로테이션 × VIX 동적-k, cap 1.0)"),
+            ("2026-05-26", "🚀 V1 CHAMP_NOMARGIN 전환", "T2 GOLD_ESCAPE(bm=90) → V1 CHAMP (엔진 로테이션 × VIX 동적-k, cap 1.0)"),
             ("2026-06-03", "🔧 비대칭 갭필터 (A안)", "롱변기·양변기롱 SOXL 매수는 갭다운(−5%↓)만 차단·갭업 허용, 양변기숏 대칭 유지"),
             ("2026-06-07", "📉 k 디리스킹 0.65→0.60", "CHAMP_BASE_K 0.65→0.60 (봇·백테 동기). 저VIX 노출 0.90→0.83, 16y MDD 개선, Calmar 정점 유지"),
             ("2026-06-11", "🔧 롱변기 stop-buy 거부 수리", "강갭업 시 buy-stop이 현재가 아래로 떨어져 Alpaca 거부 → marketable-limit 추격 (PR#12)"),
@@ -1377,7 +1300,7 @@ def _render_v2_tab():
   </div>
   <div style="opacity:0.75;margin-top:8px;font-size:0.85em">
     V1 대비 차이: ① SOXL 약세일 때만 VVIX vol-of-vol clip 추가, ② NDX(=QQQ)/SPY 20일 RS 음수일 때 alloc 20% throttle.
-    BASE rotation·regime detector는 V1과 완전 동일.
+    엔진 로테이션·regime detector는 V1과 완전 동일.
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -2742,18 +2665,16 @@ elif page == "📔 매매일지":
         unsafe_allow_html=True,
     )
 
-    # ── 기간 자산 → 시드 환산 (period-rebase) + BASE 비교 ──
+    # ── 기간 자산 → 시드 환산 (period-rebase) ──
     _eqp = _eq_j.loc[str(_j2_s):str(_j2_e)]
-    if len(_eqp) >= 2 and {"CHAMP_NOMARGIN", "BASE"}.issubset(_eqp.columns):
+    if len(_eqp) >= 2 and "CHAMP_NOMARGIN" in _eqp.columns:
         _champ0 = float(_eqp["CHAMP_NOMARGIN"].iloc[0]); _champ1 = float(_eqp["CHAMP_NOMARGIN"].iloc[-1])
-        _base0 = float(_eqp["BASE"].iloc[0]); _base1 = float(_eqp["BASE"].iloc[-1])
         _scale_champ = _user_seed_j / _champ0 if _champ0 else _user_seed_j / 100_000.0
         _champ_final = _champ1 * _scale_champ
-        _base_final = _base1 * (_user_seed_j / _base0) if _base0 else 0.0
-        _sm1, _sm2, _sm3 = st.columns(3)
+        _sm1, _sm2 = st.columns(2)
         _sm1.metric("V1 최종 자산", f"${_champ_final:,.0f}", f"{(_champ1/_champ0 - 1)*100:+,.2f}%")
-        _sm2.metric("BASE 최종 자산 (동일 기간)", f"${_base_final:,.0f}", f"{(_base1/_base0 - 1)*100:+,.2f}%")
-        _sm3.metric("V1 ÷ BASE", f"×{(_champ_final/_base_final):.2f}" if _base_final else "—", "기간 초과수익 배수")
+        _sm2.metric("기간 수익률", f"{(_champ1/_champ0 - 1)*100:+,.2f}%",
+                    f"{_j2_s} ~ {_j2_e}")
     else:
         _scale_champ = _user_seed_j / 100_000.0
 
@@ -3083,11 +3004,6 @@ elif page == "📖 용어 사전":
         "오늘 얼마나 투자할지 결정하는 배수. "
         "공식: 0.60 × clip(20/VIX, 0.5, 2.0). VIX 20일 때 0.60(중립), VIX 10이면 1.0(풀), VIX 40이면 0.30(축소).",
         "VIX=15 → k=0.80 → 전략 비중의 80%만 투자"
-    )
-    _glossary_card(
-        "BASE (비교 기준)",
-        "VIX 동적 조절 없이 고정 비중(k=0.60)으로 운영했을 때의 가상 결과. "
-        "V1 전략이 얼마나 개선됐는지 비교하는 기준선.",
     )
     _glossary_card(
         "갭필터 (Gap Filter)",
