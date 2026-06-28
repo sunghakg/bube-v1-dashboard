@@ -30,6 +30,19 @@ import streamlit as st
 ROOT = Path(__file__).parent / "data"
 CHAMP = ROOT / "champ_nomargin"
 V2DIR = ROOT / "v2_final"
+ASSETS = Path(__file__).parent / "assets"
+
+
+def load_svg(name: str) -> str:
+    """assets/<name> SVG를 읽어 컨테이너 폭에 맞게 반응형으로 렌더링할 수 있는 문자열로 반환."""
+    p = ASSETS / name
+    if not p.exists():
+        return ""
+    svg = p.read_text(encoding="utf-8")
+    # 루트 <svg>에 반응형 스타일 주입 (viewBox 비율 유지하며 폭 100%)
+    if "<svg" in svg and "style=" not in svg.split(">", 1)[0]:
+        svg = svg.replace("<svg", '<svg style="width:100%;height:auto;display:block"', 1)
+    return svg
 
 # ── V2_FINAL 표시 토글 ──────────────────────────────────────
 # V2_FINAL은 연구 옵션으로 보존하되 운영 대시보드에서는 숨긴다.
@@ -301,6 +314,17 @@ if page == "📊 백테스트":
 <b>3️⃣ VIX 비중 조절</b> — VIX 높으면(공포) 비중 줄이고, VIX 낮으면(안정) 비중 늘림. Margin 미사용(최대 100%)
 </div>
 """, unsafe_allow_html=True)
+
+    # ── 매매법 상세 흐름도 (그림) ───────────────────────────────
+    _method_svg = load_svg("v1_method.svg")
+    if _method_svg:
+        with st.expander("🗺️ 매매법 상세 흐름도 — 레짐 판정부터 청산까지 한눈에 (그림)", expanded=True):
+            st.markdown(
+                f'<div style="background:#0d1117;border-radius:12px;padding:8px;overflow-x:auto">{_method_svg}</div>',
+                unsafe_allow_html=True,
+            )
+            st.caption("매일 한 거래 사이클: ① 레짐 판정(전일 데이터) → ② 엔진 선택 → ③ 09:35 돌파 진입 "
+                       "→ ④ 비대칭 갭필터 → ⑤ VIX 동적 비중 → ⑥ 엔진별 청산. 3엔진 모두 stop-buy 변동성 돌파 진입.")
 
     col_a, col_b = st.columns([1, 1])
     with col_a:
