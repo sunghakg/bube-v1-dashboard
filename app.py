@@ -53,6 +53,55 @@ SHOW_V2 = False
 st.set_page_config(page_title="BUBE V1 CHAMP_NOMARGIN Dashboard", layout="wide", page_icon="🏆",
                    initial_sidebar_state="expanded")
 
+# ── 반응형 CSS — 휴대폰/태블릿/PC 화면 크기에 맞게 자동 조절 ──────────────
+st.markdown("""
+<style>
+/* 데스크탑: 본문 최대폭·여백 정돈 */
+.block-container { padding-top: 2.0rem; padding-bottom: 3rem; max-width: 1500px; }
+
+/* 태블릿 이하: 좌우 여백 축소 */
+@media (max-width: 992px) {
+  .block-container { padding-left: 1.1rem !important; padding-right: 1.1rem !important; }
+}
+
+/* 휴대폰 (≤640px): 세로 스택 + 폰트/여백 축소 */
+@media (max-width: 640px) {
+  .block-container { padding: 0.9rem 0.55rem 2.5rem !important; }
+
+  /* st.columns → 좁은 화면에선 한 줄에 하나씩 세로로 쌓기 */
+  div[data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; gap: 0.45rem !important; }
+  div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+  div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+    flex: 1 1 100% !important; min-width: 100% !important; width: 100% !important;
+  }
+
+  /* 제목 폰트 축소 */
+  h1 { font-size: 1.25rem !important; line-height: 1.3 !important; }
+  h2 { font-size: 1.08rem !important; }
+  h3 { font-size: 0.98rem !important; }
+  h4 { font-size: 0.9rem !important; }
+
+  /* 메트릭 카드 폰트 축소 */
+  [data-testid="stMetricValue"] { font-size: 1.05rem !important; }
+  [data-testid="stMetricLabel"] p { font-size: 0.72rem !important; }
+  [data-testid="stMetricDelta"] { font-size: 0.68rem !important; }
+
+  /* 표·데이터프레임·코드블록 가로 스크롤 */
+  [data-testid="stDataFrame"], [data-testid="stTable"],
+  [data-testid="stCodeBlock"] { overflow-x: auto !important; }
+  pre, code { font-size: 0.66rem !important; white-space: pre !important; }
+
+  /* 커스텀 HTML 카드(헤더·스펙) 패딩 축소 */
+  div[style*="padding:24px 32px"] { padding: 14px 16px !important; }
+  div[style*="padding:18px 24px"] { padding: 12px 15px !important; }
+  div[style*="padding:14px 20px"] { padding: 11px 13px !important; }
+
+  /* 버튼 폰트 살짝 축소 */
+  .stButton button { font-size: 0.85rem !important; }
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Alpaca credentials from Streamlit secrets (cloud) or env (local)
 import os as _os
 try:
