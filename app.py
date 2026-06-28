@@ -2087,6 +2087,91 @@ elif page == "📔 매매일지":
         )
         st.markdown("---")
 
+    # ── 연도별 성과 (DS식: 막대 클릭 → 그 해 월별 막대차트) ──────────
+    import altair as _alty
+    _eq_full = (_eq_j["CHAMP_NOMARGIN"].dropna()
+                if "CHAMP_NOMARGIN" in _eq_j.columns else pd.Series(dtype=float))
+    if len(_eq_full) >= 30:
+        st.markdown("### 📅 연도별 성과 — 막대를 클릭하면 그 해 월별 성과가 아래에 표시됩니다")
+
+        # 연도별 수익률(연말 종가 기준, 첫 해는 데이터 시작값 대비) + 연중 MDD
+        _yr_last = _eq_full.resample("YE").last()
+        _yr_base = pd.concat([pd.Series([_eq_full.iloc[0]], index=[_eq_full.index[0]]), _yr_last])
+        _yr_ret = _yr_base.pct_change().dropna() * 100
+
+        def _year_mdd(s):
+            return float((s / s.cummax() - 1).min() * 100)
+        _yr_mdd = _eq_full.groupby(_eq_full.index.year).apply(_year_mdd)
+
+        _yr_df = pd.DataFrame({
+            "yr":  [int(d.year) for d in _yr_ret.index],
+            "ret": _yr_ret.values,
+        })
+        _yr_df["mdd"] = [float(_yr_mdd.get(y, float("nan"))) for y in _yr_df["yr"]]
+
+        _ysel = _alty.selection_point(fields=["yr"], name="ysel")
+        _yr_chart = (
+            _alty.Chart(_yr_df).mark_bar().encode(
+                x=_alty.X("yr:O", title="연도"),
+                y=_alty.Y("ret:Q", title="연 수익률 (%)"),
+                color=_alty.condition("datum.ret >= 0",
+                                      _alty.value("#A3BE8C"), _alty.value("#BF616A")),
+                opacity=_alty.condition(_ysel, _alty.value(1.0), _alty.value(0.55)),
+                tooltip=[_alty.Tooltip("yr:O", title="연도"),
+                         _alty.Tooltip("ret:Q", title="수익률(%)", format="+.1f"),
+                         _alty.Tooltip("mdd:Q", title="연중 MDD(%)", format=".1f")],
+            ).add_params(_ysel).properties(height=300)
+        )
+        _yr_event = st.altair_chart(_yr_chart, use_container_width=True,
+                                    on_select="rerun", key="j2_year_sel")
+
+        # 선택 연도 추출 (클릭 없으면 최근 연도 기본 표시)
+        _years_all = [int(v) for v in _yr_df["yr"].values]
+        _sel_year = _years_all[-1] if _years_all else None
+        try:
+            _picked = _yr_event["selection"]["ysel"]
+            if _picked:
+                _sel_year = int(_picked[0]["yr"])
+        except Exception:
+            pass
+
+        # 월별 수익률(월말 종가 기준, 1월은 전년 말 대비)
+        _m_ret = _eq_full.resample("ME").last().pct_change() * 100
+        _m_y = _m_ret[_m_ret.index.year == _sel_year].dropna()
+        _mon_df = pd.DataFrame({
+            "m":   [int(d.month) for d in _m_y.index],
+            "ret": _m_y.values,
+        })
+        _mon_df["mlabel"] = _mon_df["m"].map(lambda x: f"{x}월")
+        _mon_order = [f"{m}월" for m in range(1, 13)]
+
+        st.markdown(f"#### 📊 {_sel_year}년 월별 성과")
+        if len(_mon_df):
+            _mon_chart = (
+                _alty.Chart(_mon_df).mark_bar().encode(
+                    x=_alty.X("mlabel:N", sort=_mon_order, title="월"),
+                    y=_alty.Y("ret:Q", title="월 수익률 (%)"),
+                    color=_alty.condition("datum.ret >= 0",
+                                          _alty.value("#A3BE8C"), _alty.value("#BF616A")),
+                    tooltip=[_alty.Tooltip("mlabel:N", title="월"),
+                             _alty.Tooltip("ret:Q", title="수익률(%)", format="+.2f")],
+                ).properties(height=280)
+            )
+            st.altair_chart(_mon_chart, use_container_width=True)
+            _yr_row = _yr_df[_yr_df["yr"] == _sel_year]
+            if len(_yr_row):
+                _best = _mon_df.loc[_mon_df["ret"].idxmax()]
+                _worst = _mon_df.loc[_mon_df["ret"].idxmin()]
+                st.caption(
+                    f"{_sel_year}년 — 연수익률 **{_yr_row['ret'].iloc[0]:+.1f}%** · "
+                    f"연중 MDD {_yr_row['mdd'].iloc[0]:.1f}% · "
+                    f"최고 {_best['mlabel']} {_best['ret']:+.1f}% · "
+                    f"최저 {_worst['mlabel']} {_worst['ret']:+.1f}% · "
+                    f"플러스 {(int((_mon_df['ret'] > 0).sum()))}/{len(_mon_df)}개월")
+        else:
+            st.info(f"{_sel_year}년 월별 데이터가 없습니다.")
+        st.markdown("---")
+
     # ── 일별 현황 테이블 ──
     st.markdown("### 📋 일별 현황 (최신 날짜부터)")
 
