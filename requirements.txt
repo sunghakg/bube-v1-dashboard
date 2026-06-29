@@ -4,3 +4,4 @@ numpy>=1.24
 matplotlib>=3.7
 alpaca-py>=0.30.0
 yfinance>=0.2.40
+# redeploy trigger 2026-06-28 (force env rebuild — stuck deploy unstick)
