@@ -1250,6 +1250,41 @@ elif page == "💰 실시간 현황":
             else:
                 st.info("라이브 오늘 주문 없음")
 
+        # ── 라이브 EOD equity 추이 (파일 기반, 라이브 키 없이도 표시) ──
+        st.markdown("---")
+        st.markdown("### 📈 라이브 EOD equity 추이 (키 없이 · 파일 기반)")
+        st.caption("봇이 commit한 EOD 원장(eod_equity_ledger_live.csv)을 읽음 — 라이브 키 미설정이어도 표시. 매 거래일 16:00 ET 갱신.")
+        _live_led = ROOT / "live" / "eod_equity_ledger_live.csv"
+        if not _live_led.exists():
+            st.info("⏳ 라이브 EOD 원장 대기 중 — 첫 거래일(월 6/29) eod_sync 후 생성됩니다.")
+        else:
+            _eldf = pd.read_csv(_live_led, parse_dates=["date"]).sort_values("date").reset_index(drop=True)
+            if len(_eldf) >= 1:
+                _ESEED = 5_000.0
+                _elt = _eldf.iloc[-1]
+                _ecum = _elt["equity"] - _ESEED
+                _eldf["d_pnl"] = _eldf["equity"].diff()
+                _eldf["d_ret"] = _eldf["equity"].pct_change() * 100
+                _e1, _e2, _e3, _e4 = st.columns(4)
+                _e1.metric("EOD Equity", f"${_elt['equity']:,.2f}",
+                           f"{_ecum:+,.2f} ({_ecum/_ESEED*100:+.2f}%) vs $5K")
+                _e2.metric("현금", f"${_elt['cash']:,.2f}")
+                _e3.metric("보유 종목수", f"{int(_elt['n_pos'])}")
+                _edp = _eldf.iloc[-1]["d_pnl"]; _edr = _eldf.iloc[-1]["d_ret"]
+                _e4.metric("전일 대비", f"${_edp:+,.2f}" if pd.notna(_edp) else "—",
+                           f"{_edr:+.2f}%" if pd.notna(_edr) else None)
+                st.line_chart(_eldf.set_index("date")["equity"], height=300)
+                with st.expander("📋 일별 EOD 손익 내역"):
+                    _esh = _eldf[["date", "equity", "cash", "n_pos", "d_pnl", "d_ret"]].copy()
+                    _esh["date"] = _esh["date"].dt.strftime("%Y-%m-%d")
+                    _esh = _esh.rename(columns={"equity": "Equity", "cash": "현금",
+                                                "n_pos": "보유수", "d_pnl": "일손익($)", "d_ret": "일수익(%)"})
+                    _esh["Equity"] = _esh["Equity"].map(lambda x: f"${x:,.2f}")
+                    _esh["현금"] = _esh["현금"].map(lambda x: f"${x:,.2f}")
+                    _esh["일손익($)"] = _esh["일손익($)"].map(lambda x: f"${x:+,.2f}" if pd.notna(x) else "—")
+                    _esh["일수익(%)"] = _esh["일수익(%)"].map(lambda x: f"{x:+.2f}%" if pd.notna(x) else "—")
+                    st.dataframe(_esh, use_container_width=True, hide_index=True)
+
         # ── 최근 30일 매매·수정 타임라인 (페이퍼) ──────────────────
         st.markdown("---")
         st.markdown("### 📋 최근 30일 매매 · 운영 수정 타임라인")
