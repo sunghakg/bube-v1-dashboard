@@ -8,38 +8,38 @@
       "hi": 2.0
     },
     "alloc_cap": 1.0,
-    "period": "2010-05-25 ~ 2026-06-29"
+    "period": "2010-05-25 ~ 2026-06-30"
   },
   "headline_16y_CHAMP": {
-    "CAGR": 59.597884737394956,
+    "CAGR": 60.158240258431746,
     "MDD": -26.332390584908726,
-    "Sharpe": 1.6737068155914805,
-    "Calmar": 2.263291839957399,
-    "Final_mult": 1853.0584846583322
+    "Sharpe": 1.6836785022353313,
+    "Calmar": 2.284571925380328,
+    "Final_mult": 1963.132120458394
   },
   "headline_16y_BASE": {
-    "CAGR": 49.50024968991447,
+    "CAGR": 49.96523116762781,
     "MDD": -25.03538445292135,
-    "Sharpe": 1.5684519469207387,
-    "Calmar": 1.9772114857272878,
-    "Final_mult": 647.1511257823742
+    "Sharpe": 1.5782335767801865,
+    "Calmar": 1.9957844570586343,
+    "Final_mult": 681.0757152666371
   },
   "bootstrap_CHAMP": {
-    "cagr_p05": 41.78635367122513,
-    "cagr_p50": 59.186382037098525,
-    "cagr_p95": 79.90880097054793,
-    "mdd_p05": -43.40356544790053,
-    "mdd_p50": -31.26931576973361,
-    "mdd_p95": -23.856758137134648,
-    "cal_p05": 1.060271066379133,
-    "cal_p50": 1.8902093341540804,
-    "cal_p95": 3.0254498215342416,
-    "p_mdd_worse_than_30": 58.81999999999999,
-    "p_mdd_worse_than_40": 10.36,
+    "cagr_p05": 41.88149054103996,
+    "cagr_p50": 59.277915728605365,
+    "cagr_p95": 79.38127789274067,
+    "mdd_p05": -43.25346347735602,
+    "mdd_p50": -31.19880748096734,
+    "mdd_p95": -23.938298551434688,
+    "cal_p05": 1.0778361935369658,
+    "cal_p50": 1.8899571621863522,
+    "cal_p95": 3.0472600222637385,
+    "p_mdd_worse_than_30": 58.620000000000005,
+    "p_mdd_worse_than_40": 10.32,
     "p_cagr_positive": 100.0,
-    "p_cagr_above_30": 99.8
+    "p_cagr_above_30": 99.83999999999999
   },
-  "trades_count": 5404,
+  "trades_count": 5405,
   "files": {
     "xlsx": "/home/runner/work/bube-v1-trader/bube-v1-trader/backtest/bube_champ_nomargin_16yr/bube_champ_nomargin_16yr.xlsx",
     "equity_csv": "/home/runner/work/bube-v1-trader/bube-v1-trader/backtest/bube_champ_nomargin_16yr/equity_curves.csv",
