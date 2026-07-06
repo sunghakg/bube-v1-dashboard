@@ -1667,6 +1667,21 @@ elif page == "📔 매매일지":
     _eq_rec = _eq_j.reindex(_daily_rec.index)["CHAMP_NOMARGIN"] if "CHAMP_NOMARGIN" in _eq_j.columns else pd.Series(dtype=float)
     _eq_daily_ret = _eq_rec.pct_change() * 100
 
+    # ── 시작 자본(시드) — 이 페이지의 모든 $ 값을 이 값 기준으로 환산 ──
+    _sc1, _sc2 = st.columns([1, 3])
+    _user_seed_j = _sc1.number_input(
+        "시작 자본 ($)", min_value=100, max_value=10_000_000,
+        value=10_000, step=1_000, key="j2_user_seed",
+        help="백테는 $100K 시드로 실행. 이 값으로 이 페이지의 모든 $ 결과를 비례 환산합니다. % 수익률은 불변."
+    )
+    _sc2.markdown(
+        f"<div style='padding-top:1.7em;color:#888'>💡 아래 <b>월별 성과·일별 현황·자산 추이·전체 거래 로그</b>의 "
+        f"모든 $ 값이 <b>${_user_seed_j:,.0f}</b> 시작 자본 기준으로 환산됩니다. % 수익률은 동일.</div>",
+        unsafe_allow_html=True,
+    )
+    _eq_nz0 = _eq_rec.dropna()
+    _scale_j = (float(_user_seed_j) / float(_eq_nz0.iloc[0])) if len(_eq_nz0) else float(_user_seed_j) / 100_000.0
+
     # ── 거래 집계 ──
     _trades_recent = _trades_j[_trades_j["date"].dt.normalize().isin(_daily_rec.index.normalize())]
     _by_date = _trades_recent.groupby(_trades_recent["date"].dt.normalize()).agg(
@@ -1741,7 +1756,7 @@ elif page == "📔 매매일지":
     if len(_eq_rec) >= 2:
         st.markdown("### 📈 기간 자산 추이")
         import altair as _alt
-        _eq_j_df = pd.DataFrame({"날짜": _eq_rec.index, "자산": _eq_rec.values}).dropna()
+        _eq_j_df = pd.DataFrame({"날짜": _eq_rec.index, "자산": _eq_rec.values * _scale_j}).dropna()
         st.altair_chart(
             _alt.Chart(_eq_j_df).mark_line(color="#34A5C5", strokeWidth=2).encode(
                 x=_alt.X("날짜:T", title="날짜"),
@@ -1757,7 +1772,7 @@ elif page == "📔 매매일지":
     # ── 📅 월별 → 주간 → 월 거래 상세 (기간 내) ──────────────────
     st.markdown("### 📅 월별 성과")
     st.caption("선택 기간을 월 단위로 요약. 행(월)을 클릭하면 그 달의 주간 성과와 거래 상세가 아래에 펼쳐집니다. "
-               "수익률·기말자산 = 자산곡선 기준 · 거래손익 = 백테 $100K 시드 기준(위 일별 현황과 동일).")
+               "모든 $ 값(거래손익·자산·상세 손익·수량)은 위 [시작 자본] 기준으로 환산 · 수익률 = 자산곡선 기준(시드 무관).")
 
     _STRAT_KOR = {"longbyungi": "롱변기", "yangbyungi": "양변기", "goldenbyungi": "황금변기"}
     _ACT_FULL = {"STOP_BUY": "▲ 진입", "LOC_SELL": "▼ LOC 청산",
@@ -1787,9 +1802,9 @@ elif page == "📔 매매일지":
         _o = _df.copy()
         _o["거래수"] = _o["거래수"].astype(int)
         _o["승률"] = _o["승률"].apply(lambda v: f"{v*100:.1f}%" if pd.notna(v) else "—")
-        _o["거래손익($)"] = _o["거래손익"].apply(lambda v: f"${v:+,.0f}")
+        _o["거래손익($)"] = _o["거래손익"].apply(lambda v: f"${v*_scale_j:+,.0f}")
         _o["수익률"] = _o["수익률"].apply(lambda v: f"{v*100:+.2f}%" if pd.notna(v) else "—")
-        _o[_balname] = _o["기말자산"].apply(lambda v: f"${v:,.0f}" if pd.notna(v) else "—")
+        _o[_balname] = _o["기말자산"].apply(lambda v: f"${v*_scale_j:,.0f}" if pd.notna(v) else "—")
         return _o.drop(columns=["거래손익", "기말자산"])
 
     def _trade_detail(_dates):
@@ -1803,9 +1818,9 @@ elif page == "📔 매매일지":
             "방향": _tt["leg"],
             "종목": _tt["ticker"],
             "액션": _tt["action"].map(lambda a: _ACT_FULL.get(a, a)),
-            "수량": _tt["qty"].apply(lambda x: f"{float(x):,.0f}" if pd.notna(x) else "—"),
+            "수량": _tt["qty"].apply(lambda x: f"{float(x)*_scale_j:,.0f}" if pd.notna(x) else "—"),
             "가격": _tt["price"].apply(lambda x: f"${float(x):,.2f}" if pd.notna(x) else "—"),
-            "손익($)": _tt["pnl"].apply(lambda x: f"${float(x):+,.0f}" if pd.notna(x) else "—"),
+            "손익($)": _tt["pnl"].apply(lambda x: f"${float(x)*_scale_j:+,.0f}" if pd.notna(x) else "—"),
         })
 
     _month_perf = _build_perf(list(_daily_rec.index), lambda d: pd.Timestamp(d).strftime("%Y-%m"), "월")
@@ -1881,7 +1896,7 @@ elif page == "📔 매매일지":
         if _date_norm in _by_date.index:
             _tr = _by_date.loc[_date_norm]
             _trade_str = f"✅ {int(_tr['건수'])}건 ({_tr['엔진']})"
-            _pnl_str = f"${float(_tr['pnl']):+,.0f}"
+            _pnl_str = f"${float(_tr['pnl'])*_scale_j:+,.0f}"
         else:
             _trade_str = f"🚫 거래 없음 · {_why_no_trade(_drow)}"
             _pnl_str = "—"
@@ -2319,7 +2334,7 @@ elif page == "📔 매매일지":
 - **k_today** — 오늘 투자 비중. `0.60 × clip(20/VIX, 0.5, 2.0)`. VIX 20→0.60, VIX 10→1.0(풀로딩), VIX 40→0.30(축소)
 - **일간 변동** — V1 포트폴리오 당일 수익률 (백테스트 기준)
 - **거래** — 당일 매매 이벤트 수 및 사용한 엔진
-- **거래 P&L** — 당일 실현·미실현 손익 합계 (백테스트 기준)
+- **거래 P&L** — 당일 실현·미실현 손익 합계 (상단 [시작 자본] 기준 환산)
 """)
 
     # ═══════════════════════════════════════════════════════════
@@ -2327,21 +2342,9 @@ elif page == "📔 매매일지":
     # ═══════════════════════════════════════════════════════════
     st.markdown("---")
     st.markdown("### 📒 전체 거래 로그 (선택 기간)")
-    st.caption("위에서 고른 기간의 모든 개별 거래를 한 줄씩. 시작 자본을 넣으면 모든 $ 값이 비례 환산됩니다 (% 수익률은 불변).")
+    st.caption("위에서 고른 기간의 모든 개별 거래를 한 줄씩. 페이지 상단 [시작 자본] 기준으로 모든 $ 값이 비례 환산됩니다 (% 수익률은 불변).")
 
-    # ── 시작 자본 ──
-    _sc1, _sc2 = st.columns([1, 3])
-    _user_seed_j = _sc1.number_input(
-        "시작 자본 ($)", min_value=100, max_value=10_000_000,
-        value=10_000, step=1_000, key="j2_user_seed",
-        help="백테는 $100K 시드로 실행. 이 값으로 모든 $ 결과를 비례 스케일링합니다. % 수익률은 변하지 않음."
-    )
-    _sc2.markdown(
-        f"<div style='padding-top:1.7em;color:#888'>💡 모든 $ 값이 <b>${_user_seed_j:,.0f}</b> 시드 기준으로 환산됩니다. % 수익률은 동일.</div>",
-        unsafe_allow_html=True,
-    )
-
-    # ── 기간 자산 → 시드 환산 (period-rebase) ──
+    # ── 기간 자산 → 시드 환산 (period-rebase, 상단 [시작 자본] 사용) ──
     _eqp = _eq_j.loc[str(_j2_s):str(_j2_e)]
     if len(_eqp) >= 2 and "CHAMP_NOMARGIN" in _eqp.columns:
         _champ0 = float(_eqp["CHAMP_NOMARGIN"].iloc[0]); _champ1 = float(_eqp["CHAMP_NOMARGIN"].iloc[-1])
