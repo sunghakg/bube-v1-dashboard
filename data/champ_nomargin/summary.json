@@ -14,38 +14,38 @@
       "center": 20.0,
       "cap": 1.5
     },
-    "period": "2010-05-25 ~ 2026-07-03"
+    "period": "2010-05-25 ~ 2026-07-06"
   },
   "headline_16y_CHAMP": {
-    "CAGR": 59.8735649120073,
+    "CAGR": 59.67402469355061,
     "MDD": -23.47854578706444,
-    "Sharpe": 1.6741614931581512,
-    "Calmar": 2.55013941046531,
-    "Final_mult": 1912.6131129333205
+    "Sharpe": 1.670809695273347,
+    "Calmar": 2.5416405783712612,
+    "Final_mult": 1884.1618610491194
   },
   "headline_16y_BASE": {
-    "CAGR": 50.08115167325249,
+    "CAGR": 49.927274142233635,
     "MDD": -21.14081204345114,
-    "Sharpe": 1.5772744212135044,
-    "Calmar": 2.3689322609897707,
-    "Final_mult": 691.1353988929295
+    "Sharpe": 1.5743274332355588,
+    "Calmar": 2.3616535656065194,
+    "Final_mult": 682.8334527865968
   },
   "bootstrap_CHAMP": {
-    "cagr_p05": 43.086990596620815,
-    "cagr_p50": 60.69337858883493,
-    "cagr_p95": 80.54791298863859,
-    "mdd_p05": -42.54613934186732,
-    "mdd_p50": -30.678475636141112,
-    "mdd_p95": -23.699531512409287,
-    "cal_p05": 1.1285409120571872,
-    "cal_p50": 1.9590424512476496,
-    "cal_p95": 3.1111415626830774,
-    "p_mdd_worse_than_30": 54.96,
-    "p_mdd_worse_than_40": 8.86,
+    "cagr_p05": 43.01920819685762,
+    "cagr_p50": 60.69280176845206,
+    "cagr_p95": 80.74078622978311,
+    "mdd_p05": -42.24792873515811,
+    "mdd_p50": -30.78005789438275,
+    "mdd_p95": -23.704944391935296,
+    "cal_p05": 1.1443097429162468,
+    "cal_p50": 1.9705451330833266,
+    "cal_p95": 3.14169708934177,
+    "p_mdd_worse_than_30": 55.08,
+    "p_mdd_worse_than_40": 8.72,
     "p_cagr_positive": 100.0,
-    "p_cagr_above_30": 99.86
+    "p_cagr_above_30": 99.82
   },
-  "trades_count": 5418,
+  "trades_count": 5420,
   "files": {
     "xlsx": "/home/runner/work/bube-v1-trader/bube-v1-trader/backtest/bube_champ_nomargin_16yr/bube_champ_nomargin_16yr.xlsx",
     "equity_csv": "/home/runner/work/bube-v1-trader/bube-v1-trader/backtest/bube_champ_nomargin_16yr/equity_curves.csv",
