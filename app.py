@@ -1675,6 +1675,19 @@ elif page == "📔 매매일지":
         pnl=("pnl", "sum")
     )
 
+    # 일자별 액션 요약 — '일별 현황'에 '거래 내역'을 통합해 한 줄에서 그날 무슨 일이
+    # 있었는지(진입/청산/8% STOP)를 바로 보이게 함. (groupby로 1회 precompute)
+    from collections import Counter as _Counter
+    _ACT_SUM = {"STOP_BUY": "▲진입", "LOC_SELL": "▼LOC청산",
+                "MOO_SELL": "▼MOO청산", "STOP": "🛑8% STOP"}
+    _act_by_date = {}
+    for _adn, _agrp in _trades_recent.groupby(_trades_recent["date"].dt.normalize()):
+        _acnt = _Counter(_ACT_SUM.get(a, a) for a in _agrp["action"])
+        _act_by_date[_adn] = " · ".join(f"{k}×{v}" if v > 1 else k for k, v in _acnt.items())
+
+    def _day_action_summary(_dnorm):
+        return _act_by_date.get(_dnorm, "—")
+
     # ── 요약 카드 ──
     _has_rg = "regime" in _daily_rec.columns
     _has_k = "k_today" in _daily_rec.columns
@@ -1741,6 +1754,94 @@ elif page == "📔 매매일지":
         )
         st.markdown("---")
 
+    # ── 📅 월별 → 주간 → 월 거래 상세 (기간 내) ──────────────────
+    st.markdown("### 📅 월별 성과")
+    st.caption("선택 기간을 월 단위로 요약. 행(월)을 클릭하면 그 달의 주간 성과와 거래 상세가 아래에 펼쳐집니다. "
+               "수익률·기말자산 = 자산곡선 기준 · 거래손익 = 백테 $100K 시드 기준(위 일별 현황과 동일).")
+
+    _STRAT_KOR = {"longbyungi": "롱변기", "yangbyungi": "양변기", "goldenbyungi": "황금변기"}
+    _ACT_FULL = {"STOP_BUY": "▲ 진입", "LOC_SELL": "▼ LOC 청산",
+                 "MOO_SELL": "▼ MOO 청산", "STOP": "🛑 8% STOP"}
+
+    def _build_perf(_dates, _keyfunc, _keyname):
+        _grp = {}
+        for _d in _dates:
+            _grp.setdefault(_keyfunc(_d), []).append(_d)
+        _recs = []
+        for _key in sorted(_grp):
+            _dts = _grp[_key]
+            _eqseg = _eq_rec.reindex(_dts).dropna()
+            _ret = (float(_eqseg.iloc[-1]) / float(_eqseg.iloc[0]) - 1) if len(_eqseg) >= 2 else float("nan")
+            _endbal = float(_eqseg.iloc[-1]) if len(_eqseg) else float("nan")
+            _dnorm = pd.DatetimeIndex(_dts).normalize()
+            _tt = _trades_recent[_trades_recent["date"].dt.normalize().isin(_dnorm)]
+            _nz = _tt[_tt["pnl"] != 0]
+            _wr = float((_nz["pnl"] > 0).mean()) if len(_nz) else float("nan")
+            _recs.append({
+                _keyname: _key, "거래수": int(len(_tt)), "승률": _wr,
+                "거래손익": float(_tt["pnl"].sum()), "수익률": _ret, "기말자산": _endbal,
+            })
+        return pd.DataFrame(_recs)
+
+    def _fmt_perf(_df, _balname):
+        _o = _df.copy()
+        _o["거래수"] = _o["거래수"].astype(int)
+        _o["승률"] = _o["승률"].apply(lambda v: f"{v*100:.1f}%" if pd.notna(v) else "—")
+        _o["거래손익($)"] = _o["거래손익"].apply(lambda v: f"${v:+,.0f}")
+        _o["수익률"] = _o["수익률"].apply(lambda v: f"{v*100:+.2f}%" if pd.notna(v) else "—")
+        _o[_balname] = _o["기말자산"].apply(lambda v: f"${v:,.0f}" if pd.notna(v) else "—")
+        return _o.drop(columns=["거래손익", "기말자산"])
+
+    def _trade_detail(_dates):
+        _dnorm = pd.DatetimeIndex(_dates).normalize()
+        _tt = _trades_recent[_trades_recent["date"].dt.normalize().isin(_dnorm)].sort_values("date")
+        if _tt.empty:
+            return None
+        return pd.DataFrame({
+            "날짜": _tt["date"].dt.strftime("%Y-%m-%d"),
+            "엔진": _tt["strategy"].map(lambda s: _STRAT_KOR.get(s, s)),
+            "방향": _tt["leg"],
+            "종목": _tt["ticker"],
+            "액션": _tt["action"].map(lambda a: _ACT_FULL.get(a, a)),
+            "수량": _tt["qty"].apply(lambda x: f"{float(x):,.0f}" if pd.notna(x) else "—"),
+            "가격": _tt["price"].apply(lambda x: f"${float(x):,.2f}" if pd.notna(x) else "—"),
+            "손익($)": _tt["pnl"].apply(lambda x: f"${float(x):+,.0f}" if pd.notna(x) else "—"),
+        })
+
+    _month_perf = _build_perf(list(_daily_rec.index), lambda d: pd.Timestamp(d).strftime("%Y-%m"), "월")
+    if _month_perf.empty:
+        st.info("선택 기간에 월별 데이터가 없습니다.")
+    else:
+        _msel = None
+        try:
+            _mev = st.dataframe(
+                _fmt_perf(_month_perf, "월말자산($)"), use_container_width=True,
+                hide_index=True, on_select="rerun", selection_mode="single-row",
+                key="j2_month_perf",
+            )
+            _mrows = _mev.selection.rows
+            if _mrows:
+                _msel = _month_perf["월"].iloc[_mrows[0]]
+        except TypeError:
+            st.dataframe(_fmt_perf(_month_perf, "월말자산($)"), use_container_width=True, hide_index=True)
+            _mpick = st.selectbox("월 선택 (상세)", ["— 선택 —"] + _month_perf["월"].tolist(), key="j2_month_pick")
+            _msel = None if _mpick == "— 선택 —" else _mpick
+
+        if _msel:
+            _mdates = [d for d in _daily_rec.index if pd.Timestamp(d).strftime("%Y-%m") == _msel]
+            st.markdown(f"#### 📆 {_msel} — 주간 성과 & 거래 상세 ({len(_mdates)}일)")
+            st.markdown("**📈 주간 성과**")
+            _week_perf = _build_perf(_mdates, lambda d: str(pd.Timestamp(d).to_period("W")), "주")
+            st.dataframe(_fmt_perf(_week_perf, "주말자산($)"), use_container_width=True, hide_index=True)
+            st.markdown("**📒 매매일지 상세**")
+            _mdet = _trade_detail(_mdates)
+            if _mdet is None:
+                st.info("이 달에는 체결된 거래가 없습니다 (레짐/보유만 있는 달).")
+            else:
+                st.dataframe(_mdet, use_container_width=True, hide_index=True, height=360)
+
+    st.markdown("---")
+
     # ── 일별 현황 테이블 ──
     st.markdown("### 📋 일별 현황 (최신 날짜부터)")
 
@@ -1803,6 +1904,7 @@ elif page == "📔 매매일지":
             "일간 변동": f"{_dr:+.2f}%" if not pd.isna(_dr) else "—",
             "누적 수익률": f"{_cumret:+.2f}%" if not pd.isna(_cumret) else "—",
             "거래": _trade_str,
+            "액션": _day_action_summary(_date_norm),
             "거래 P&L": _pnl_str,
         })
 
@@ -2066,7 +2168,7 @@ elif page == "📔 매매일지":
                         "STOP_BUY": "▲ 진입",
                         "LOC_SELL": "▼ LOC 청산",
                         "MOO_SELL": "▼ MOO 청산",
-                        "STOP":     "↩ 스탑 취소",
+                        "STOP":     "🛑 8% STOP",
                     }.get(_act, _act)
                     if _is_buy:
                         # 진입: 시가 대비 돌파%(=얼마 올라서 진입했나). SOXL 레그만(시가 데이터 보유)
@@ -2183,11 +2285,11 @@ elif page == "📔 매매일지":
             }.get(r["strategy"], r["strategy"]), axis=1)
             _tw["액션"] = _tw["action"].map({
                 "STOP_BUY": "▲ 진입", "LOC_SELL": "▼ LOC 청산",
-                "MOO_SELL": "▼ MOO 청산", "STOP": "↩ 취소",
+                "MOO_SELL": "▼ MOO 청산", "STOP": "🛑 8% STOP",
             }).fillna(_tw["action"])
             _tw["price"] = _tw["price"].apply(lambda x: f"${float(x):,.2f}" if pd.notna(x) else "—")
             _tw["pnl"]   = _tw["pnl"].apply(lambda x: f"${float(x):+,.0f}" if pd.notna(x) else "—")
-            _tw["qty"]   = _tw["qty"].apply(lambda x: f"{float(x):,.2f}" if pd.notna(x) else "—")
+            _tw["qty"]   = _tw["qty"].apply(lambda x: f"{float(x):,.0f}" if pd.notna(x) else "—")
             _tw = _tw[["date", "엔진", "ticker", "액션", "qty", "price", "pnl"]]
             _tw.columns  = ["날짜", "엔진", "종목", "액션", "수량", "가격", "손익"]
             st.dataframe(_tw, use_container_width=True, hide_index=True)
@@ -2254,7 +2356,7 @@ elif page == "📔 매매일지":
 
     # ── 거래 로그 필터 ──
     _strat_map = {"longbyungi": "롱변기", "yangbyungi": "양변기", "goldenbyungi": "황금변기"}
-    _act_map = {"STOP_BUY": "▲ 진입", "LOC_SELL": "▼ LOC청산", "MOO_SELL": "▼ MOO청산", "STOP": "↩ 취소"}
+    _act_map = {"STOP_BUY": "▲ 진입", "LOC_SELL": "▼ LOC청산", "MOO_SELL": "▼ MOO청산", "STOP": "🛑 8% STOP"}
 
     _tl = _trades_j[(_trades_j["date"] >= pd.Timestamp(_j2_s)) & (_trades_j["date"] <= pd.Timestamp(_j2_e))].copy()
     _f1, _f2, _f3 = st.columns([2, 1, 1])
