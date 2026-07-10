@@ -303,10 +303,12 @@ BEAR streak > 90일      → 황금변기   (SOXL K-vol breakout)
 #   근거: 갭상승 진입은 정상보다 ~2배 좋은 진입 → 되살림. 16y Cal 2.10→2.29.
 #   롤백: GAP_FILTER_MODE=sym (전부 대칭)
 
-# Regime detector (look-ahead safe: .shift(1))
-consensus  = QQQ/SPY/SMH SMA200 ±2% 중 ≥2 합의
-fast_bear  = VIX9D/VIX > 1.05  OR  SOXL 5d mom < -10%
-dwell      = 5일 (regime 전환 최소 유지)
+# Regime detector — 캐논 단일 소스 regime_canon.py (look-ahead safe: .shift(1))
+#   봇·백테·대시보드가 같은 코드 (2026-07-10 통일). 평활 없음(무상태).
+5신호 투표 = VIX(≤18/‌>30) · QQQ주간RSI(≥60/<40) · SPY MA200(±2%)
+             · SOXL MA50(±5%) · SOXL 5일모멘텀(±5%)
+soft 분류  = 약세 ≥2표 → BEAR / 강세 ≥3표 → BULL / 그 외 NEUTRAL   (위험회피 비대칭)
+fast_bear  = VIX9D/VIX > 1.05 → 투표 무시하고 즉시 BEAR
 max_bear   = 90일 (GOLD_ESCAPE 트리거)
 """, language="python")
 
@@ -862,76 +864,37 @@ elif page == "💰 실시간 현황":
     # ── Section B: Today's regime + active sub-strategy + k_today ──
     @st.cache_data(ttl=1800)  # 30분 캐시 (regime은 하루 단위로 변함)
     def _compute_regime_state():
+        # ★2026-07-10: 봇/백테와 동일한 캐논 감지기(regime_canon)로 통일.
+        #   종전 대시보드 자체 3자산 SMA200 합의+dwell 평활은 봇(캐논)과 불일치
+        #   (라이브 -25.9% 검증에서 발견한 감지기 이중화의 세 번째 사본이었음) →
+        #   벤더링된 regime_canon.py로 교체해 봇이 실제 판정하는 값과 일치시킴.
         try:
             import yfinance as yf
             import datetime as _dt
-            CONSENSUS = ["QQQ", "SPY", "SMH"]
-            SMA = 200; THR = 0.02; MIN_AGREE = 2
-            VIX_THR = 1.05; MOM_THR = -0.10
-            DWELL = 5; MAX_BEAR = 90
+            import pandas as pd
+            import regime_canon as rc
+            MAX_BEAR = 90
 
             end = _dt.date.today() + _dt.timedelta(days=1)
-            start = end - _dt.timedelta(days=600)
+            start = end - _dt.timedelta(days=1100)  # SPY MA200 + QQQ 주간RSI Wilder 웜업 여유
 
-            sma_ratios = {}
-            for a in CONSENSUS:
-                df = yf.download(a, start=start, end=end, progress=False, auto_adjust=False)
+            def _close(t):
+                df = yf.download(t, start=start, end=end, progress=False, auto_adjust=False)
                 if hasattr(df.columns, "get_level_values"):
                     df.columns = df.columns.get_level_values(0)
-                close = df["Close"]
-                sma = close.rolling(SMA).mean()
-                sma_ratios[a] = (close / sma).shift(1)
+                return df["Close"]
 
-            vix = yf.download("^VIX", start=start, end=end, progress=False, auto_adjust=False)
-            if hasattr(vix.columns, "get_level_values"):
-                vix.columns = vix.columns.get_level_values(0)
-            vix9d = yf.download("^VIX9D", start=start, end=end, progress=False, auto_adjust=False)
-            if hasattr(vix9d.columns, "get_level_values"):
-                vix9d.columns = vix9d.columns.get_level_values(0)
-            soxl = yf.download("SOXL", start=start, end=end, progress=False, auto_adjust=False)
-            if hasattr(soxl.columns, "get_level_values"):
-                soxl.columns = soxl.columns.get_level_values(0)
+            spy, soxl, qqq = _close("SPY"), _close("SOXL"), _close("QQQ")
+            vix, vix9d = _close("^VIX"), _close("^VIX9D")
 
-            common = sma_ratios[CONSENSUS[0]].dropna().index
-            for a in CONSENSUS[1:]:
-                common = common.intersection(sma_ratios[a].dropna().index)
-            common = common[-250:]
+            frame = rc.prepare_signal_frame(spy_close=spy, soxl_close=soxl,
+                                            vix_close=vix, qqq_close=qqq, vix9d_close=vix9d)
+            frame = rc.classify(frame, mode="soft", vix9d_fast_bear=True).tail(250)
+            if frame.empty:
+                return {"error": "regime 시리즈가 비어있음 (yfinance 데이터 부족)"}
 
-            regimes = []
-            for d in common:
-                bull = bear = 0
-                for a in CONSENSUS:
-                    r = float(sma_ratios[a].loc[d])
-                    if r > 1 + THR: bull += 1
-                    elif r < 1 - THR: bear += 1
-                if bear >= MIN_AGREE: base = "BEAR"
-                elif bull >= MIN_AGREE: base = "BULL"
-                else: base = "NEUTRAL"
-                try:
-                    pidx = vix.index[vix.index < d]
-                    if len(pidx) > 0:
-                        if float(vix9d.loc[pidx[-1], "Close"]) / float(vix.loc[pidx[-1], "Close"]) > VIX_THR:
-                            base = "BEAR"
-                except Exception: pass
-                try:
-                    pidx = soxl.index[soxl.index < d]
-                    if len(pidx) >= 6:
-                        if float(soxl.loc[pidx[-1], "Close"]) / float(soxl.loc[pidx[-6], "Close"]) - 1 < MOM_THR:
-                            base = "BEAR"
-                except Exception: pass
-                regimes.append(base)
-
-            if not regimes:
-                return {"error": "regime 시리즈가 비어있음 (yfinance 데이터 부족 또는 SMA200 미충족)"}
-
-            s = list(regimes); i = 0; n = len(s)
-            while i < n:
-                j = i
-                while j < n and s[j] == s[i]: j += 1
-                if (j - i) < DWELL and i > 0:
-                    for k in range(i, j): s[k] = s[i-1]
-                i = j
-            today_reg = s[-1] if s else "NEUTRAL"
+            s = frame["regime"].tolist()
+            today_reg = s[-1]
             streak = 0
             for r in reversed(s):
                 if r == "BEAR": streak += 1
@@ -940,28 +903,31 @@ elif page == "💰 실시간 현황":
             active = {"BULL":"longbyungi","NEUTRAL":"longbyungi","BEAR":"yangbyungi"}.get(today_reg, "longbyungi")
             if gold_escape:
                 active = "goldenbyungi"
-            recent = "".join(r[0] for r in s[-7:]) if s else ""
+            recent = "".join({"BULL":"B","BEAR":"b","NEUTRAL":"N"}[r] for r in s[-7:])
 
-            # CHAMP_NOMARGIN k_today calc
+            last = frame.iloc[-1]
+            bull_v, bear_v = int(last["bull_votes"]), int(last["bear_votes"])
+            ratio9d = (float(last["vix9d"]) / float(last["vix"])
+                       if "vix9d" in frame.columns and pd.notna(last["vix9d"]) else None)
+
+            # CHAMP_NOMARGIN k_today calc (봇과 동일: 전일 종가 VIX)
             try:
-                vix_today = float(vix["Close"].iloc[-1])
+                vix_today = float(last["vix"])
                 scale = max(0.5, min(2.0, 20.0 / vix_today))
-                k_today = 0.60 * scale   # k0=0.60 (2026-06-07 디리스킹, 봇과 동기)
-                # alloc cap 1.0 (no margin)
-                # For display: assume strat alloc = 1.0 then alloc_today = min(k_today, 1.0)
+                k_today = 0.60 * scale
                 alloc_max = min(k_today, 1.0)
             except Exception:
                 vix_today = None; scale = None; k_today = None; alloc_max = None
 
             return {
                 "regime": today_reg,
-                "raw_regime": regimes[-1] if regimes else "NEUTRAL",
+                "votes": f"강세 {bull_v} / 약세 {bear_v}",
+                "fast_bear_ratio": ratio9d,
                 "active": active,
                 "bear_streak": streak,
                 "max_bear": MAX_BEAR,
                 "gold_escape": gold_escape,
                 "last7": recent,
-                "dwell": DWELL,
                 "vix_today": vix_today,
                 "scale": scale,
                 "k_today": k_today,
@@ -980,14 +946,14 @@ elif page == "💰 실시간 현황":
 
         st.markdown("### 🌡 오늘 시장 상태 / V1 비중 조절")
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("오늘 레짐", rstate["regime"], f"raw {rstate['raw_regime']}",
-                  help="BULL/NEUTRAL = 롱변기 엔진, BEAR = 양변기 엔진. dwell 5일 적용 후 값.")
+        c1.metric("오늘 레짐", rstate["regime"], rstate.get("votes", ""),
+                  help="캐논 5신호 soft 투표: 약세 2표면 BEAR(양변기), 강세 3표면 BULL(롱변기), 그 외 NEUTRAL. 봇·백테와 동일 코드.")
         c2.metric("현재 활성 엔진", f"{active_emoji} {active_name}",
                   help="롱변기=SOXL 단방향 / 양변기=SOXL롱+SOXS숏 / 황금변기=변동성 돌파")
         c3.metric("BEAR 연속 일수", f"{rstate['bear_streak']}일", f"최대 {rstate['max_bear']}일 → 황금변기",
                   help="BEAR 레짐이 연속으로 몇 일 지속됐는지. 90일 넘으면 황금변기로 전환.")
-        c4.metric("최근 7일 레짐", rstate["last7"], f"전환 최소 유지: {rstate['dwell']}일",
-                  help="B=BEAR, U=BULL, N=NEUTRAL 순서. 가장 오른쪽이 오늘.")
+        c4.metric("최근 7일 레짐", rstate["last7"], "무상태(평활 없음)",
+                  help="B=BULL, b=BEAR, N=NEUTRAL 순서. 가장 오른쪽이 오늘. 캐논은 전일 종가만으로 매일 재판정(평활 없음).")
 
         if rstate["vix_today"] is not None:
             v1, v2, v3, v4 = st.columns(4)
