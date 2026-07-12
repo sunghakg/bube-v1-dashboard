@@ -325,3 +325,134 @@ svg_path = os.path.join(out_dir, "v1_method.svg")
 with open(svg_path, "w", encoding="utf-8") as f:
     f.write(svg)
 print("SVG:", svg_path, len(svg), "bytes  H=", H)
+
+# ============================================================
+# 📱 모바일 버전 — 430px 단일 컬럼 스택 (assets/v1_method_mobile.svg)
+#    데스크톱 1300px SVG는 폰에서 ~3.5배 축소되어 글자가 안 읽힘 →
+#    같은 내용(inp/reg/eng/ent/ext/rows 재사용)을 세로로 쌓아 원본 크기 유지.
+#    app.py가 CSS media query로 768px 이하에서 이 파일을 대신 표시 (2026-07-12).
+#    WM=375: 폰 실측 컨테이너(~321px)에서 배율 0.86 → fs12.5가 ~10.7px로 읽힘.
+# ============================================================
+S.clear()
+WM = 375
+MX = 16
+CW = WM - MX * 2
+cxm = WM / 2
+
+
+def m_stage(yy, num, title, c, desc=None):
+    A(f'<circle cx="{MX+13}" cy="{yy-5}" r="12" fill="{c}" fill-opacity="0.18" stroke="{c}" stroke-width="1.8"/>')
+    A(f'<text x="{MX+13}" y="{yy-1}" font-size="12.5" font-weight="800" fill="{c}" text-anchor="middle">{num}</text>')
+    A(f'<text x="{MX+34}" y="{yy}" font-size="15.5" font-weight="800" fill="{TXT}">{esc(title)}</text>')
+    if desc:
+        A(f'<text x="{MX+34}" y="{yy+17}" font-size="11" fill="{MUT}">{esc(desc)}</text>')
+        return 34
+    return 18
+
+
+def m_card_lines(yy, t, c, lines, fs=12.5, lh=19, title_fs=14):
+    h = 66 + (len(lines) - 1) * lh
+    card(MX, yy, CW, h, c)
+    title_line(MX + 18, yy + 24, c, t, fs=title_fs, w="700")
+    A(f'<line x1="{MX+18}" y1="{yy+34}" x2="{MX+CW-18}" y2="{yy+34}" stroke="{CARD_STK}"/>')
+    ly = yy + 54
+    for ln in lines:
+        body_line(MX + 18, ly, ln, c=TXT, fs=fs); ly += lh
+    return h
+
+
+A('<DEFS_PLACEHOLDER>')
+A(f'<rect width="{WM}" height="HEIGHT_PLACEHOLDER" fill="url(#bg)"/>')
+A(f'<rect x="0" y="0" width="5" height="HEIGHT_PLACEHOLDER" fill="{CYAN}"/>')
+A(f'<text x="{MX}" y="42" font-size="21" font-weight="800" fill="{TXT}">BUBE V1 매매법 — 상세 흐름도</text>')
+A(f'<text x="{MX}" y="63" font-size="10.5" fill="{CYAN}" font-weight="600">레짐 판정 → 엔진 선택 → 돌파 진입 → 갭필터 → VIX 사이징 → 청산</text>')
+y = 96
+
+# ── 0. 레짐 판정
+y += m_stage(y, "0", "매일 레짐(시장 국면) 판정", BLUE, "전부 전일(T−1) 종가 · 봇=백테=대시보드 동일 코드")
+for t, c, lines in inp:
+    y += m_card_lines(y, t, c, lines) + 10
+arrow(cxm, y, y + 28, c=MUT, label="종합 판정", lc=BLUE)
+y += 40
+
+# ── 레짐 결과 카드 (목적지 명시)
+for t, c, sub, dest, dc in reg:
+    card(MX, y, CW, 62, c, fill=c, op=0.12)
+    title_line(MX + 18, y + 26, c, t, fs=16, w="800")
+    A(f'<text x="{MX+CW-18}" y="{y+26}" font-size="11.5" fill="{MUT}" text-anchor="end">{esc(sub)}</text>')
+    A(f'<text x="{MX+18}" y="{y+48}" font-size="12.5" font-weight="700" fill="{dc}">{esc(dest)}</text>')
+    y += 70
+y += 10
+
+# ── 1. 엔진 선택
+y += m_stage(y, "1", "엔진 선택 — 레짐이 엔진을 결정", GOLD, "★ BULL·NEUTRAL 둘 다 롱변기 · BEAR만 양변기")
+for t, c, frm, what, kind in eng:
+    card(MX, y, CW, 86, c)
+    title_line(MX + 18, y + 24, c, t, fs=14, w="700")
+    pw = 20 + text_w(frm, 10.5)
+    A(f'<rect x="{MX+CW-14-pw:.0f}" y="{y+10}" width="{pw:.0f}" height="20" rx="10" fill="{c}" fill-opacity="0.18" stroke="{c}" stroke-opacity="0.6"/>')
+    A(f'<text x="{MX+CW-14-pw/2:.0f}" y="{y+24}" font-size="10.5" font-weight="700" fill="{c}" text-anchor="middle">{esc(frm)}</text>')
+    A(f'<line x1="{MX+18}" y1="{y+34}" x2="{MX+CW-18}" y2="{y+34}" stroke="{CARD_STK}"/>')
+    body_line(MX + 18, y + 55, what, c=TXT, fs=12.5)
+    body_line(MX + 18, y + 74, "성격: " + kind, c=MUT, fs=11.5)
+    y += 96
+y += 10
+
+# ── 2. 진입
+y += m_stage(y, "2", "진입 — 09:35 ET · 전부 stop-buy 돌파", GREEN, "딥매수 아님 — 변동성 돌파 추격 매수")
+for t, c, lines in ent:
+    y += m_card_lines(y, t, c, lines) + 10
+y += 8
+
+# ── 3. 갭필터
+y += m_stage(y, "3", "갭필터 — 비대칭 A안 (2026-06-03)", AMBER, "나쁜 진입만 거르고 좋은 진입은 살린다")
+y += m_card_lines(y, "롱변기 · 양변기롱 (SOXL 매수)", GREEN,
+                  ["갭다운 −5% 이하만 진입 차단 · 갭업은 허용", "(갭업 진입은 정상보다 ~2배 좋은 진입)"]) + 10
+y += m_card_lines(y, "양변기숏 (SOXS 매수)", RED,
+                  ["|갭| > 5% 면 진입 차단 (양방향 대칭 유지)"]) + 10
+y += 8
+
+# ── 4. VIX 동적 비중
+y += m_stage(y, "4", "VIX 동적 비중", GOLD, "전일 VIX 기준 · 마진 미사용 (cap 1.0)")
+card(MX, y, CW, 118, GOLD)
+title_line(MX + 18, y + 24, GOLD, "비중 공식", fs=14, w="700")
+A(f'<line x1="{MX+18}" y1="{y+34}" x2="{MX+CW-18}" y2="{y+34}" stroke="{CARD_STK}"/>')
+A(f'<text x="{MX+18}" y="{y+56}" font-size="13" font-family="monospace" fill="{TXT}">k = 0.60 × clip( 20/VIX, 0.5, 2.0 )</text>')
+A(f'<text x="{MX+18}" y="{y+78}" font-size="13" font-family="monospace" fill="{TXT}">alloc = min( k × 엔진비중, 1.0 )</text>')
+body_line(MX + 18, y + 102, "VIX↑(공포)→비중↓ · VIX↓(안정)→비중↑", c=CYAN, fs=12)
+y += 128
+card(MX, y, CW, 130, CYAN)
+title_line(MX + 18, y + 24, CYAN, "VIX → 비중 직관", fs=14, w="700")
+A(f'<line x1="{MX+18}" y1="{y+34}" x2="{MX+CW-18}" y2="{y+34}" stroke="{CARD_STK}"/>')
+yy = y + 54
+for a, b, cmt, c in rows:
+    A(f'<text x="{MX+18}" y="{yy}" font-size="12" font-family="monospace" fill="{TXT}">{esc(a)}</text>')
+    A(f'<text x="{MX+112}" y="{yy}" font-size="11.5" fill="{MUT}">{esc(b)}</text>')
+    A(f'<text x="{MX+CW-18}" y="{yy}" font-size="12" font-weight="700" fill="{c}" text-anchor="end">{esc(cmt)}</text>')
+    yy += 22
+y += 140
+y += 8
+
+# ── 5. 청산
+y += m_stage(y, "5", "청산 / 보유 — 엔진별 출구", GREEN, "롱변기 손절 = VIX-적응 S_wide −8%×clip(VIX/20,1,1.5)")
+for t, c, lines in ext:
+    y += m_card_lines(y, t, c, lines) + 10
+y += 8
+
+# ── FOOTER
+fh = 108
+A(f'<rect x="{MX}" y="{y}" width="{CW}" height="{fh}" rx="10" fill="{CYAN}" fill-opacity="0.08" stroke="{CYAN}" stroke-opacity="0.45"/>')
+A(f'<text x="{MX+16}" y="{y+26}" font-size="12.5" font-weight="700" fill="{CYAN}">핵심 — 3개 엔진 모두 stop-buy 변동성 돌파 진입.</text>')
+A(f'<text x="{MX+16}" y="{y+46}" font-size="12" fill="{MUT}">평균회귀 알파는 \'진입\'이 아니라 양변기 \'보유기\'에서.</text>')
+A(f'<text x="{MX+16}" y="{y+66}" font-size="12" fill="{MUT}">진짜 알파 = ① 레짐 전환 + ② VIX 동적 사이징.</text>')
+A(f'<text x="{MX+16}" y="{y+90}" font-size="11" fill="#7B8598">16y Calmar ~2.5 · bootstrap 중앙값 ~1.9 = 운영 기대치</text>')
+y += fh + 24
+
+HM = int(y)
+head_m = f'<svg viewBox="0 0 {WM} {HM}" xmlns="http://www.w3.org/2000/svg" font-family="{FONT}">'
+out_m = "\n".join(S).replace("<DEFS_PLACEHOLDER>", defs).replace("HEIGHT_PLACEHOLDER", str(HM))
+svg_m = head_m + "\n" + out_m + "\n</svg>"
+svg_path_m = os.path.join(out_dir, "v1_method_mobile.svg")
+with open(svg_path_m, "w", encoding="utf-8") as f:
+    f.write(svg_m)
+print("SVG(mobile):", svg_path_m, len(svg_m), "bytes  H=", HM)

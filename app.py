@@ -270,12 +270,21 @@ if page == "📊 백테스트":
     _section("📊", "백테스트 — BUBE V1 전략 개요",
              "전략의 모든 규칙은 아래 흐름도 한 장에 · 16년 핵심 지표는 상단 칩 참조", accent="#81A1C1")
 
-    # ── 매매법 상세 흐름도 (그림) ───────────────────────────────
+    # ── 매매법 상세 흐름도 (그림) — 데스크톱/모바일 반응형 전환 ───────
     _method_svg = load_svg("v1_method.svg")
+    _method_svg_m = load_svg("v1_method_mobile.svg")
     if _method_svg:
         with st.expander("🗺️ 매매법 상세 흐름도 — 레짐 판정부터 청산까지 한눈에 (그림)", expanded=True):
+            # 768px 이하에서는 세로 1열 스택 모바일 SVG로 교체 (1300px 원본은 폰에서 글자가 안 읽힘)
+            _m_mobile = (
+                f'<div class="v1m-mob" style="border-radius:12px;overflow:hidden;border:1px solid #4C566A">{_method_svg_m}</div>'
+                if _method_svg_m else ""
+            )
             st.markdown(
-                f'<div style="border-radius:12px;overflow:hidden;overflow-x:auto;border:1px solid #4C566A">{_method_svg}</div>',
+                '<style>.v1m-mob{display:none}'
+                '@media (max-width:768px){.v1m-desk{display:none}.v1m-mob{display:block}}</style>'
+                f'<div class="v1m-desk" style="border-radius:12px;overflow:hidden;overflow-x:auto;border:1px solid #4C566A">{_method_svg}</div>'
+                + _m_mobile,
                 unsafe_allow_html=True,
             )
             st.caption("매일 한 거래 사이클: ① 레짐 판정(전일 데이터) → ② 엔진 선택 → ③ 09:35 돌파 진입 "
