@@ -84,6 +84,7 @@ st.markdown("""
   div[style*="padding:24px 32px"] { padding: 14px 16px !important; }
   div[style*="padding:18px 24px"] { padding: 12px 15px !important; }
   div[style*="padding:14px 20px"] { padding: 11px 13px !important; }
+  div[style*="padding:12px 18px"] { padding: 10px 12px !important; }
 
   /* 버튼 폰트 살짝 축소 */
   .stButton button { font-size: 0.85rem !important; }
@@ -201,6 +202,17 @@ def _hdr_chip(label, value, color="#88C0D0"):
             f"<div style='font-size:1.14em;font-weight:700;color:{color};white-space:nowrap'>{value}</div></div>")
 
 
+def _section(icon, title, desc="", accent="#34A5C5"):
+    """페이지/대섹션 공용 헤더 카드 — 전 페이지 동일 디자인 (2026-07-12 통일)."""
+    d = (f"<div style='opacity:0.82;font-size:0.86em;margin-top:4px;color:#D8DEE9;line-height:1.5'>{desc}</div>"
+         if desc else "")
+    st.markdown(
+        f"<div style='background:linear-gradient(135deg,#2E3440,#3B4252);border-left:5px solid {accent};"
+        f"padding:12px 18px;border-radius:12px;margin:4px 0 14px'>"
+        f"<div style='font-size:1.28em;font-weight:800;color:#ECEFF4'>{icon} {title}</div>{d}</div>",
+        unsafe_allow_html=True)
+
+
 # 슬림 헤더 — 제목 + 16년 핵심지표 칩 스트립 (한 줄, 반응형 wrap)
 st.markdown(f"""
 <div style="background:linear-gradient(135deg,#2E3440 0%,#3B4252 55%,#434C5E 100%);border-left:5px solid #34A5C5;padding:14px 20px;border-radius:12px;color:#ECEFF4;margin-bottom:14px">
@@ -255,16 +267,15 @@ with st.sidebar:
 # TAB 1: Overview
 # ───────────────────────────────────────────────────────────
 if page == "📊 백테스트":
-    st.subheader("📊 백테스트 — BUBE V1 전략 개요")
-
-    st.caption("전략 설명은 아래 흐름도 한 장에 모두 담겨 있습니다 · 16년 핵심 지표는 상단 카드 참조.")
+    _section("📊", "백테스트 — BUBE V1 전략 개요",
+             "전략의 모든 규칙은 아래 흐름도 한 장에 · 16년 핵심 지표는 상단 칩 참조", accent="#81A1C1")
 
     # ── 매매법 상세 흐름도 (그림) ───────────────────────────────
     _method_svg = load_svg("v1_method.svg")
     if _method_svg:
         with st.expander("🗺️ 매매법 상세 흐름도 — 레짐 판정부터 청산까지 한눈에 (그림)", expanded=True):
             st.markdown(
-                f'<div style="background:#0d1117;border-radius:12px;padding:8px;overflow-x:auto">{_method_svg}</div>',
+                f'<div style="border-radius:12px;overflow:hidden;overflow-x:auto;border:1px solid #4C566A">{_method_svg}</div>',
                 unsafe_allow_html=True,
             )
             st.caption("매일 한 거래 사이클: ① 레짐 판정(전일 데이터) → ② 엔진 선택 → ③ 09:35 돌파 진입 "
@@ -411,9 +422,10 @@ max_bear   = 90일 (GOLD_ESCAPE 트리거)
 # TAB 3: 성과 검증 — 위기 방어력 · 확률 분포 · 연도별 · 기간별 (탭 통합)
 # ───────────────────────────────────────────────────────────
 elif page == "🧪 성과 검증":
-    st.subheader("🧪 성과 검증 — 16년 백테스트를 4가지 각도로")
+    _section("🧪", "성과 검증 — 16년 백테스트를 4가지 각도로",
+             "위기 방어력 · 확률 분포 · 연도별 성과 · 기간별 안정성", accent="#A3BE8C")
     _vt_crisis, _vt_boot, _vt_year, _vt_win = st.tabs(
-        ["📈 위기 방어력", "🎲 확률 분포", "📅 연도별 성과", "🔄 기간별 안정성"])
+        ["위기 방어력", "확률 분포", "연도별 성과", "기간별 안정성"])
 
     with _vt_crisis:
         st.caption("코로나·금리쇼크 등 실제 위기 구간에서 V1(VIX 동적 비중)의 수익률과 낙폭(MDD).")
@@ -535,14 +547,7 @@ elif page == "🧪 성과 검증":
     """)
 
     with _vt_year:
-        st.markdown(
-            "<div style='background:#3B4252;border-left:4px solid #34A5C5;padding:10px 16px;border-radius:8px;"
-            "margin-bottom:12px;color:#E5E9F0;line-height:1.6'>"
-            "<b style='color:#88C0D0'>🏆 CHAMP_NOMARGIN = 우리가 실제로 운영하는 V1 매매법</b> "
-            "(VIX 동적 비중). 연도별 수익률·MDD·Sharpe·연말자본을 보여줍니다. "
-            "아래 막대를 클릭하면 그 해 월별 성과가 표시됩니다.</div>",
-            unsafe_allow_html=True,
-        )
+        st.caption("17년 연도별 수익률·MDD·Sharpe·연말자본. 아래 막대를 클릭하면 그 해 월별 성과가 표시됩니다.")
 
         yp = CHAMP / "yearly.csv"
         if yp.exists():
@@ -754,12 +759,11 @@ elif page == "🧪 성과 검증":
 # TAB 7: BUBE Live (Alpaca paper)
 # ───────────────────────────────────────────────────────────
 elif page == "💰 실시간 현황":
-    st.subheader("💰 실시간 현황 — 백테 · 페이퍼 · 라이브(실거래)")
-
     _lc1, _lc2 = st.columns([3, 1])
     with _lc1:
-        st.caption("운영 스펙: k = 0.60 × clip(20/VIX, 0.5, 2.0) · alloc ≤ 1.0 (margin X) · "
-                   "비대칭 갭필터 · 엔진 로테이션 — 상세는 📊 백테스트 페이지의 기술 스펙 참조.")
+        _section("💰", "실시간 현황 — 백테 · 페이퍼 · 라이브(실거래)",
+                 "운영 스펙: k = 0.60 × clip(20/VIX, 0.5, 2.0) · alloc ≤ 1.0 (margin X) · "
+                 "비대칭 갭필터 · 엔진 로테이션 — 상세는 📊 백테스트 페이지")
     with _lc2:
         if st.button("🔄 지금 새로고침", key="refresh_live_top", use_container_width=True):
             st.cache_data.clear()
@@ -1199,16 +1203,10 @@ elif page == "💰 실시간 현황":
 # TAB 9: 최근 1달 매매일지 (signal_diagnostics + trade_log_enriched)
 # ───────────────────────────────────────────────────────────
 elif page == "🔬 백테 vs 페이퍼":
-    st.subheader("🔬 백테스트 vs 페이퍼 트레이딩 비교")
-    st.caption("같은 기간에서 백테스트(이론 시뮬레이션)와 실제 페이퍼 트레이딩 결과를 나란히 비교합니다.")
-
-    st.markdown("""
-<div style="background:#3B4252;border-left:4px solid #D08770;padding:12px 18px;border-radius:8px;margin-bottom:12px;color:#D8DEE9;line-height:1.8">
-<b>📌 백테스트</b> = 역사적 데이터로 완벽한 체결을 가정한 시뮬레이션 (이론적 상한)<br>
-<b>🤖 페이퍼 트레이딩</b> = Alpaca 가상계좌에서 봇이 실제로 실행한 결과<br>
-<span style="opacity:0.8;font-size:0.92em">두 곡선이 다른 이유: 슬리피지·체결 시점 차이·VIX 시차·갭업 폴백 등</span>
-</div>
-""", unsafe_allow_html=True)
+    _section("🔬", "백테스트 vs 페이퍼 트레이딩 비교",
+             "📌 백테스트 = 완벽 체결 가정 시뮬레이션 (이론적 상한) · 🤖 페이퍼 = Alpaca 가상계좌에서 봇이 실제 실행한 결과<br>"
+             "두 곡선이 다른 이유: 슬리피지 · 체결 시점 차이 · VIX 시차 · 갭업 폴백 등 — 하단 '괴리 주요 원인' 참조",
+             accent="#D08770")
 
     # ── Lazy load ──
     if "cmp_loaded" not in st.session_state:
@@ -1564,13 +1562,14 @@ elif page == "🔬 백테 vs 페이퍼":
 | 갭업 stop-buy 거부 | 페이퍼↓ | 강갭업 시 추격 불가 → 진입 스킵 (PR#12 이후 개선) |
 | OPG/CLS 옥션 미체결 | 양방향 | Alpaca paper는 MOO/CLS 미보장 → MARKET fallback |
 | 데이터 ffill | 페이퍼 0% | 공휴일·주말 페이퍼 equity 불변 → 당일 수익률 0% |
-| 봇 레짐 평활화 | 양방향 | 봇 dwell 5일 평활 vs 백테 5-신호 detector → 레짐 판정 최대 5일 지연 |
+| 레짐 감지기 이중화 (PR#38·39 이전) | 양방향 | 과거 봇 dwell 5일 평활 vs 백테 5-신호 → 2026-07-10 캐논 단일소스로 통일 완료 |
 """)
 
 
 elif page == "📔 매매일지":
-    st.subheader("📔 V1 매매일지 — 일별 레짐·비중 + 전체 거래 로그")
-    st.caption("V1 백테스트의 일별 레짐 판정·VIX 기반 비중(k_today)·활성 엔진·거래를 보여주고, 맨 아래 '전체 거래 로그'에서 시드 환산·필터·CSV 다운로드까지 한 곳에서 처리합니다. 데이터는 백테스트 기준.")
+    _section("📔", "V1 매매일지 — 일별 레짐·비중 + 전체 거래 로그",
+             "일별 레짐 판정 · VIX 기반 비중(k_today) · 활성 엔진 · 거래 내역 — 맨 아래 '전체 거래 로그'에서 "
+             "시드 환산·필터·CSV 다운로드까지. 데이터는 백테스트 기준", accent="#EBCB8B")
 
     def _mtime_j2(p):
         try: return p.stat().st_mtime
@@ -2390,8 +2389,8 @@ elif page == "📔 매매일지":
 # ───────────────────────────────────────────────────────────
 elif page == "🔍 데이터 정확성":
     import altair as _altd
-    st.subheader("🔍 데이터 정확성 — 백테가 쓰는 가격 데이터를 독립 3소스로 교차검증")
-    st.caption("검증일: 2026-06-21 (HST) · 대상: V1 백테가 사용하는 SOXL·VIX 가격 데이터")
+    _section("🔍", "데이터 정확성 — 독립 3소스 교차검증",
+             "검증일 2026-06-21 (HST) · 대상: V1 백테가 사용하는 SOXL·VIX 가격 데이터", accent="#88C0D0")
 
     # ── 한 줄 결론 배너 ──
     st.markdown("""
@@ -2564,8 +2563,8 @@ yfinance Close는 분할만 조정(배당 미반영), Stooq는 분할+배당 조
 # 용어 사전 탭
 # ───────────────────────────────────────────────────────────
 elif page == "📖 용어 사전":
-    st.subheader("📖 용어 사전 — 처음 보는 분을 위한 용어 정리")
-    st.caption("이 대시보드에 등장하는 용어들을 카테고리별로 정리했습니다.")
+    _section("📖", "용어 사전 — 처음 보는 분을 위한 용어 정리",
+             "이 대시보드에 등장하는 용어들을 카테고리별로 정리했습니다", accent="#B48EAD")
 
     def _glossary_card(term, definition, example=None):
         ex_html = f"<div style='color:#9AA5B8;font-size:0.88em;margin-top:4px'>예시: {example}</div>" if example else ""

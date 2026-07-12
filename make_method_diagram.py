@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
-"""BUBE V1 매매법 — 상세 흐름도 SVG 생성기.
-한 거래 사이클(장 시작 전 레짐 판정 → 엔진 선택 → 진입 → 갭필터 → VIX 사이징 → 청산)을
+"""BUBE V1 매매법 — 상세 흐름도 SVG 생성기 (2026-07-12 캐논 정합 + 대시보드 팔레트 통일).
+
+한 거래 사이클(레짐 판정 → 엔진 선택 → 진입 → 갭필터 → VIX 사이징 → 청산)을
 위에서 아래로 따라가는 플로우차트. 결과물: assets/v1_method.svg
+
+★ 내용의 단일 소스 = regime_canon.py (벤더 사본) + CHAMP_NOMARGIN 스펙.
+  - 레짐: 5신호 투표(VIX·QQQ주간RSI14·SPY MA200·SOXL MA50·SOXL 5일모멘텀),
+    soft 비대칭(곰 2표/소 3표), fast-BEAR(VIX9D/VIX>1.05), 무상태(평활·dwell 없음)
+  - 롱변기 청산: S_wide VIX-적응 손절 −8%×clip(VIX/20,1,1.5) (PR#34)
+  규칙이 바뀌면 이 파일도 함께 갱신할 것.
+★ 팔레트 = app.py 대시보드(Nord 계열)와 동일 — 디자인 이질감 제거 (2026-07-12).
 """
 import os
 
@@ -22,17 +30,21 @@ def text_w(s, fs):
             w += 0.55
     return w * fs
 
-# ---- palette (v1_journey와 동일 계열)
-BG0, BG1 = "#0d1117", "#161d29"
-CARD, CARD_STK = "#1b2533", "#2c3a4e"
-GOLD, CYAN, AMBER, GREEN, RED = "#f5c84b", "#4cc9f0", "#ff9242", "#5fd38b", "#ef5a6f"
-BLUE = "#5b8def"
-TXT, MUT = "#e8eef6", "#9fb0c3"
+# ---- palette — app.py 대시보드와 동일한 Nord 계열 --------------------------
+BG0, BG1 = "#2E3440", "#3B4252"          # 헤더 카드와 같은 gradient
+CARD, CARD_STK = "#3B4252", "#4C566A"
+CYAN  = "#34A5C5"   # 대시보드 accent = 롱변기
+GOLD  = "#EBCB8B"   # NEUTRAL · 양변기
+AMBER = "#D08770"   # 황금변기
+GREEN = "#A3BE8C"   # BULL / 긍정
+RED   = "#BF616A"   # BEAR / 부정
+BLUE  = "#81A1C1"   # 정보
+TXT, MUT = "#ECEFF4", "#B8C0CE"
 FONT = "'Malgun Gothic','Segoe UI',sans-serif"
 
 # ---- helpers --------------------------------------------------------------
 def card(x, y, w, h, c, fill=CARD, op=1.0):
-    A(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="{fill}" fill-opacity="{op}" stroke="{c}" stroke-opacity="0.85" stroke-width="1.4"/>')
+    A(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="{fill}" fill-opacity="{op}" stroke="{c}" stroke-opacity="0.8" stroke-width="1.4"/>')
     A(f'<rect x="{x}" y="{y}" width="6" height="{h}" rx="3" fill="{c}"/>')
 
 def title_line(x, y, c, t, fs=18, w="700"):
@@ -56,41 +68,55 @@ def stage_header(y, num, title, desc, c):
         dx = 102 + text_w(title, 19) + 20
         A(f'<text x="{dx:.0f}" y="{y}" font-size="13.5" fill="{MUT}">{esc(desc)}</text>')
 
-# ---- canvas height is computed as we go; build body then wrap -------------
-B = []  # body elements (so we can compute H before header rect)
-def AB(s): B.append(s)
-
 cx = W / 2     # center spine x for arrows
 
 # ===== HEADER =====
 A('<DEFS_PLACEHOLDER>')
 A(f'<rect width="{W}" height="HEIGHT_PLACEHOLDER" fill="url(#bg)"/>')
+A(f'<rect x="0" y="0" width="6" height="HEIGHT_PLACEHOLDER" fill="{CYAN}"/>')
 A(f'<text x="60" y="76" font-size="38" font-weight="800" fill="{TXT}">BUBE V1 매매법 — 상세 흐름도</text>')
-A(f'<text x="62" y="108" font-size="18" fill="{GOLD}" font-weight="600">SOXL 3× 레버리지 · 매일 한 사이클: 레짐 판정 → 엔진 선택 → 돌파 진입 → 갭필터 → VIX 사이징 → 청산</text>')
+A(f'<text x="62" y="108" font-size="18" fill="{CYAN}" font-weight="600">SOXL 3× 레버리지 · 매일 한 사이클: 레짐 판정 → 엔진 선택 → 돌파 진입 → 갭필터 → VIX 사이징 → 청산</text>')
 # legend
-leg = [("BULL/NEUTRAL", GREEN), ("BEAR", RED), ("롱변기", CYAN), ("양변기", GOLD), ("황금변기", AMBER)]
+leg = [("BULL", GREEN), ("NEUTRAL", GOLD), ("BEAR", RED), ("롱변기", CYAN), ("양변기", GOLD), ("황금변기", AMBER)]
 lx = 62
 for name, c in leg:
     w = 38 + text_w(name, 13)
-    A(f'<rect x="{lx}" y="126" width="{w:.0f}" height="26" rx="13" fill="{c}" fill-opacity="0.16" stroke="{c}" stroke-opacity="0.6"/>')
+    A(f'<rect x="{lx}" y="126" width="{w:.0f}" height="26" rx="13" fill="{c}" fill-opacity="0.14" stroke="{c}" stroke-opacity="0.6"/>')
     A(f'<circle cx="{lx+15}" cy="139" r="4.5" fill="{c}"/>')
     A(f'<text x="{lx+27}" y="144" font-size="13" fill="{c}" font-weight="600">{esc(name)}</text>')
     lx += w + 12
 
 y = 196  # running cursor
 
-# ===== STAGE 0: 레짐 판정 =====
-stage_header(y, "0", "장 시작 전 — 매일 레짐(시장 국면) 판정", "전부 전일(T−1) 데이터 사용 · 미래 정보 누설 0", BLUE)
+# ===== STAGE 0: 레짐 판정 (캐논 regime_canon.py — 5신호 투표 + soft + fast-BEAR) =====
+stage_header(y, "0", "장 시작 전 — 매일 레짐(시장 국면) 판정", "캐논 감지기 · 전부 전일(T−1) 종가 · 봇=백테=대시보드 동일 코드", BLUE)
 y += 20
-# three input cards feeding the regime
 inp = [
-    ("📈 추세 합의", BLUE, ["QQQ · SPY · SMH 의", "200일선 ±2% 밴드", "3개 중 2개 이상 합의"]),
-    ("⚡ 빠른 곰장 신호", RED, ["VIX9D / VIX > 1.05", "  또는", "SOXL 5일 모멘텀 < −10%"]),
-    ("🛡 안정 장치", MUT, ["dwell 5일 = 전환 최소 유지", "(레짐 깜빡임 방지)", "max_bear 90일 → 황금변기"]),
+    ("🗳 5신호 투표 (전일 종가)", BLUE, [
+        "① VIX: ≤18 강세 · >30 약세",
+        "② QQQ 주간 RSI14: ≥60 강세 · <40 약세",
+        "③ SPY vs 200일선: ±2% 밴드",
+        "④ SOXL vs 50일선: ±5% 밴드",
+        "⑤ SOXL 5일 모멘텀: ±5% 밴드",
+    ]),
+    ("⚖ soft 분류 — 위험회피 비대칭", GOLD, [
+        "약세 ≥ 2표  →  🔴 BEAR",
+        "강세 ≥ 3표  →  🟢 BULL",
+        "그 외        →  🟡 NEUTRAL",
+        "곰은 2표면 인정 · 소는 3표 필요",
+        "= 하락 위험에 더 민감하게 반응",
+    ]),
+    ("⚡ fast-BEAR + 무상태", RED, [
+        "VIX9D/VIX > 1.05 (단기공포 역전)",
+        "→ 투표 무시하고 즉시 BEAR",
+        "평활·dwell 없음 = 매일 새로 판정",
+        "(어제 레짐 기억 안 함 · 무상태)",
+        "BEAR 연속 >90일 → 황금변기",
+    ]),
 ]
 iw, ig = 393, 30
 ix0 = 60
-ih = 116
+ih = 158
 for i, (t, c, lines) in enumerate(inp):
     x = ix0 + i * (iw + ig)
     card(x, y, iw, ih, c)
@@ -117,7 +143,6 @@ y += rh + 18
 # ===== STAGE 1: 엔진 선택 =====
 stage_header(y + 8, "1", "엔진 선택 — 레짐이 매매 엔진을 결정", "", GOLD)
 y += 24
-# arrows from each regime to engine (simple vertical)
 eng = [
     ("롱변기 (Long-byungi)", CYAN, "BULL · NEUTRAL", "SOXL 단방향 매수", "추세 추종"),
     ("양변기 v5 (Yang-byungi)", GOLD, "BEAR", "SOXL 롱 + SOXS 숏 페어", "평균회귀 보유"),
@@ -154,7 +179,7 @@ for i in range(3):
     x = ix0 + i * (rw + rg) + rw / 2
     arrow(x, y - 18, y + 12, c=eng[i][1])
 y += 24
-e2h = 102
+e2h = 114
 for i, (t, c, lines) in enumerate(ent):
     x = ix0 + i * (rw + rg)
     card(x, y, rw, e2h, c)
@@ -165,12 +190,10 @@ for i, (t, c, lines) in enumerate(ent):
         body_line(x + 22, yy, ln, c=TXT, fs=13.5); yy += 21
 y += e2h + 20
 
-# ===== STAGE 2.5: 갭필터 =====
+# ===== STAGE 3: 갭필터 =====
 stage_header(y + 8, "3", "갭필터 — 비대칭 A안 (2026-06-03)", "나쁜 진입만 거르고 좋은 진입은 살린다", AMBER)
 y += 22
 gh = 74
-# left: SOXL long side, right: SOXS short side
-gx2 = ix0 + (rw + rg)  # split into two halves of full width
 half = (rw * 3 + rg * 2 - rg) / 2
 card(ix0, y, half, gh, GREEN)
 title_line(ix0 + 22, y + 30, GREEN, "롱변기 · 양변기롱 (SOXL 매수)", fs=15, w="700")
@@ -182,11 +205,10 @@ y += gh + 18
 arrow(cx, y - 14, y + 18, c=MUT, label="진입 확정분에 비중 적용", lc=GOLD)
 y += 30
 
-# ===== STAGE 3: VIX 사이징 =====
+# ===== STAGE 4: VIX 사이징 =====
 stage_header(y + 6, "4", "VIX 동적 비중 — 변동성이 노출을 정한다", "전일 VIX 기준 · 마진 미사용 (cap 1.0)", GOLD)
 y += 20
 sh = 168
-# formula card (left, wide) + table (right)
 fw = rw * 2 + rg
 card(ix0, y, fw, sh, GOLD)
 title_line(ix0 + 22, y + 34, GOLD, "비중 공식", fs=16, w="700")
@@ -194,7 +216,6 @@ A(f'<text x="{ix0+22}" y="{y+72}" font-size="17" font-family="monospace" fill="{
 A(f'<text x="{ix0+22}" y="{y+102}" font-size="17" font-family="monospace" fill="{TXT}">alloc = min( k × 엔진비중 , 1.0 )</text>')
 body_line(ix0 + 22, y + 134, "VIX↑ (공포) → 비중↓   ·   VIX↓ (안정) → 비중↑", c=CYAN, fs=14)
 body_line(ix0 + 22, y + 156, "margin 0% — 최대 100% 현금 한도, broker 강제청산 원천 차단", c=MUT, fs=13)
-# table (right card)
 tx = ix0 + fw + rg
 card(tx, y, rw, sh, CYAN)
 title_line(tx + 22, y + 30, CYAN, "VIX → 비중 직관", fs=15, w="700")
@@ -212,20 +233,20 @@ y += sh + 18
 arrow(cx, y - 14, y + 18, c=MUT, label="당일 보유 → 청산", lc=GREEN)
 y += 30
 
-# ===== STAGE 4: 청산 =====
-stage_header(y + 6, "5", "청산 / 보유 — 엔진별 출구", "", GREEN)
+# ===== STAGE 5: 청산 =====
+stage_header(y + 6, "5", "청산 / 보유 — 엔진별 출구", "롱변기 손절은 VIX-적응 S_wide (2026-06-22 배포)", GREEN)
 y += 20
 ext = [
-    ("롱변기 청산", CYAN, ["−8% 하드스톱 (장중 손절)", "익일 시가(MOO) 청산", "손절이 약 = 추세 추종형"]),
-    ("양변기 청산", GOLD, ["종가(LOC) 청산", "손실분 overnight carry →", "익일 반등 평균회귀 알파"]),
-    ("황금변기 청산", AMBER, ["변동성 밴드 이탈 시", "곰장 종료까지 보유", "tail 위험 흡수"]),
+    ("롱변기 청산", CYAN, ["장중: VIX-적응 손절 S_wide", "−8% × clip( VIX/20 , 1 , 1.5 )", "익일 시가(MOO) 전량 청산"]),
+    ("양변기 청산", GOLD, ["종가(LOC) 청산 · 장중 손절 없음", "손실분 overnight carry →", "익일 반등 평균회귀 알파"]),
+    ("황금변기 청산", AMBER, ["변동성 밴드 이탈 시 청산", "곰장 종료까지 보유", "tail 위험 흡수 (16y 발동 0회)"]),
 ]
 y += 12
 for i in range(3):
     x = ix0 + i * (rw + rg) + rw / 2
     arrow(x, y - 18, y + 12, c=ext[i][1])
 y += 24
-x4h = 102
+x4h = 114
 for i, (t, c, lines) in enumerate(ext):
     x = ix0 + i * (rw + rg)
     card(x, y, rw, x4h, c)
@@ -237,10 +258,10 @@ for i, (t, c, lines) in enumerate(ext):
 y += x4h + 24
 
 # ===== FOOTER =====
-A(f'<rect x="60" y="{y}" width="{W-120}" height="86" rx="12" fill="{GOLD}" fill-opacity="0.08" stroke="{GOLD}" stroke-opacity="0.45"/>')
-A(f'<text x="84" y="{y+32}" font-size="15.5" font-weight="700" fill="{GOLD}">핵심 — 3개 엔진 모두 stop-buy 모멘텀(변동성 돌파) 진입. 평균회귀 알파는 \'진입\'이 아니라 양변기 \'보유기\'에서 나온다.</text>')
-A(f'<text x="84" y="{y+58}" font-size="13.5" fill="{MUT}">진짜 알파 = ① 레짐 전환 + ② VIX 동적 사이징.  절대수익기가 아니라 SOXL Buy&amp;Hold −90% 낙폭을 약 −34%로 \'길들이는\' 위험관리 도구.</text>')
-A(f'<text x="84" y="{y+78}" font-size="12.5" fill="#62748a">SOXL 단일자산 · in-sample 추정 · 소자본 유효.  운영 기대 Calmar ~1.6–1.9.</text>')
+A(f'<rect x="60" y="{y}" width="{W-120}" height="86" rx="12" fill="{CYAN}" fill-opacity="0.08" stroke="{CYAN}" stroke-opacity="0.45"/>')
+A(f'<text x="84" y="{y+32}" font-size="15.5" font-weight="700" fill="{CYAN}">핵심 — 3개 엔진 모두 stop-buy 모멘텀(변동성 돌파) 진입. 평균회귀 알파는 \'진입\'이 아니라 양변기 \'보유기\'에서 나온다.</text>')
+A(f'<text x="84" y="{y+58}" font-size="13.5" fill="{MUT}">진짜 알파 = ① 레짐 전환 + ② VIX 동적 사이징.  SOXL Buy&amp;Hold −90% 낙폭을 −23~−31%로 \'길들이는\' 위험관리 도구.</text>')
+A(f'<text x="84" y="{y+78}" font-size="12.5" fill="#7B8598">16y 캐논 Calmar ~2.5 · bootstrap 중앙값 ~1.9 = 운영 기대치 · SOXL 단일자산 · 소자본 유효.</text>')
 y += 86 + 30
 
 H = int(y)
