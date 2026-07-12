@@ -276,17 +276,23 @@ if page == "📊 백테스트":
     if _method_svg:
         with st.expander("🗺️ 매매법 상세 흐름도 — 레짐 판정부터 청산까지 한눈에 (그림)", expanded=True):
             # 768px 이하에서는 세로 1열 스택 모바일 SVG로 교체 (1300px 원본은 폰에서 글자가 안 읽힘)
-            _m_mobile = (
-                f'<div class="v1m-mob" style="border-radius:12px;overflow:hidden;border:1px solid #4C566A">{_method_svg_m}</div>'
-                if _method_svg_m else ""
-            )
+            # ⚠ 반드시 별도 st.markdown 3회로 분리 — <style>과 SVG를 한 문자열로 합치면
+            #   CommonMark 파서가 <style> 블록(1줄 종료) 뒤의 SVG 내부를 파괴함 (빈 <svg>만 남음).
+            #   <div ...>로 시작하는 블록은 빈 줄까지 raw HTML로 통과되어 안전.
             st.markdown(
-                '<style>.v1m-mob{display:none}'
-                '@media (max-width:768px){.v1m-desk{display:none}.v1m-mob{display:block}}</style>'
-                f'<div class="v1m-desk" style="border-radius:12px;overflow:hidden;overflow-x:auto;border:1px solid #4C566A">{_method_svg}</div>'
-                + _m_mobile,
+                "<style>.v1m-mob{display:none}"
+                "@media (max-width:768px){.v1m-desk{display:none}.v1m-mob{display:block}}</style>",
                 unsafe_allow_html=True,
             )
+            st.markdown(
+                f'<div class="v1m-desk" style="border-radius:12px;overflow:hidden;overflow-x:auto;border:1px solid #4C566A">{_method_svg}</div>',
+                unsafe_allow_html=True,
+            )
+            if _method_svg_m:
+                st.markdown(
+                    f'<div class="v1m-mob" style="border-radius:12px;overflow:hidden;border:1px solid #4C566A">{_method_svg_m}</div>',
+                    unsafe_allow_html=True,
+                )
             st.caption("매일 한 거래 사이클: ① 레짐 판정(전일 데이터) → ② 엔진 선택 → ③ 09:35 돌파 진입 "
                        "→ ④ 비대칭 갭필터 → ⑤ VIX 동적 비중 → ⑥ 엔진별 청산. 3엔진 모두 stop-buy 변동성 돌파 진입.")
 
