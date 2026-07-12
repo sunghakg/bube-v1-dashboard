@@ -1,10 +1,7 @@
+# ⚠ 자동 벤더링 사본 — 원본은 bube-v1-trader/regime_canon.py (단일 소스).
+#   daily_backtest 워크플로가 매 실행 원본으로 덮어씀. 이 파일 직접 수정 금지.
 # -*- coding: utf-8 -*-
 """캐논 레짐 감지기 — 단일 소스 (single source of truth).
-
-⚠ 이 파일은 bube-v1-trader repo의 regime_canon.py를 벤더링한 사본이다
-  (대시보드는 별도 Streamlit Cloud 배포라 트레이더 repo를 import 불가).
-  트레이더 원본이 바뀌면 이 사본도 함께 갱신할 것. 원본과의 등가는
-  트레이더 repo tests/test_regime_canon_unify.py가 보증.
 
 봇(bube_trader.py)과 백테(backtest/regime_detector.py)가 이 모듈 하나를 import.
 규칙이 두 곳에 존재해서 생기는 감지기 이중화(2026-07-09 라이브 -25.9% 검증에서
