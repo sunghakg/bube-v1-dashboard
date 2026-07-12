@@ -129,30 +129,67 @@ y += ih + 22
 arrow(cx, y - 14, y + 18, c=MUT, label="종합 판정", lc=BLUE)
 y += 30
 
-# regime result row: BULL / NEUTRAL / BEAR
-reg = [("🟢 BULL", GREEN, "상승장"), ("🟡 NEUTRAL", GOLD, "중립장"), ("🔴 BEAR", RED, "하락장")]
+# regime result row: BULL / NEUTRAL / BEAR — 카드 안에 '어느 엔진으로 가는지' 직접 명시
+#   (세로 정렬만 보면 NEUTRAL→양변기로 오독하기 쉬움 → 목적지를 카드에 쓰고 합류 화살표로 해소)
+reg = [
+    ("🟢 BULL", GREEN, "상승장", "→ 🚀 롱변기로", CYAN),
+    ("🟡 NEUTRAL", GOLD, "중립장", "→ 🚀 롱변기로 (BULL과 동일 취급!)", CYAN),
+    ("🔴 BEAR", RED, "하락장", "→ 🚽 양변기로 (91일째부턴 ✨황금변기)", GOLD),
+]
 rw, rg = 393, 30
-rh = 56
-for i, (t, c, sub) in enumerate(reg):
+rh = 84
+for i, (t, c, sub, dest, dc) in enumerate(reg):
     x = ix0 + i * (rw + rg)
     card(x, y, rw, rh, c, fill=c, op=0.12)
-    title_line(x + 22, y + 36, c, t, fs=20, w="800")
-    A(f'<text x="{x+rw-22}" y="{y+36}" font-size="14" fill="{MUT}" text-anchor="end">{esc(sub)}</text>')
-y += rh + 18
+    title_line(x + 22, y + 34, c, t, fs=20, w="800")
+    A(f'<text x="{x+rw-22}" y="{y+34}" font-size="14" fill="{MUT}" text-anchor="end">{esc(sub)}</text>')
+    A(f'<text x="{x+22}" y="{y+64}" font-size="15" font-weight="700" fill="{dc}">{esc(dest)}</text>')
+y += rh + 12
 
 # ===== STAGE 1: 엔진 선택 =====
-stage_header(y + 8, "1", "엔진 선택 — 레짐이 매매 엔진을 결정", "", GOLD)
-y += 24
+stage_header(y + 12, "1", "엔진 선택 — 레짐이 매매 엔진을 결정",
+             "★ BULL과 NEUTRAL은 둘 다 롱변기 · BEAR만 양변기 — 선 색을 따라가세요", GOLD)
+y += 26
 eng = [
     ("롱변기 (Long-byungi)", CYAN, "BULL · NEUTRAL", "SOXL 단방향 매수", "추세 추종"),
     ("양변기 v5 (Yang-byungi)", GOLD, "BEAR", "SOXL 롱 + SOXS 숏 페어", "평균회귀 보유"),
     ("황금변기 (Golden-byungi)", AMBER, "BEAR 90일↑", "SOXL 변동성 돌파", "tail 보험 (실데이터 0회)"),
 ]
-y += 12
-for i in range(3):
-    x = ix0 + i * (rw + rg) + rw / 2
-    arrow(x, y - 18, y + 16, c=reg[i][1])
-y += 28
+
+# ── 합류 화살표 존: BULL↓ + NEUTRAL↙ → 롱변기 / BEAR↙ → 양변기 / (점선) 91일째 → 황금변기
+def _flow_pill(px, py, text, c, fs=12.5):
+    lw = 18 + text_w(text, fs)
+    A(f'<rect x="{px-lw/2:.0f}" y="{py-13}" width="{lw:.0f}" height="26" rx="13" fill="{BG0}" stroke="{c}" stroke-opacity="0.9" stroke-width="1.3"/>')
+    A(f'<text x="{px:.0f}" y="{py+4.5}" font-size="{fs}" font-weight="700" fill="{c}" text-anchor="middle">{esc(text)}</text>')
+
+c1 = ix0 + rw / 2
+c2 = ix0 + (rw + rg) + rw / 2
+c3 = ix0 + 2 * (rw + rg) + rw / 2
+zone_top = y
+zone_bot = y + 100          # 엔진 카드 상단
+mid1 = zone_top + 30        # NEUTRAL 가로 구간
+mid2 = zone_top + 68        # BEAR 가로 구간
+
+# BULL → 롱변기 (초록 직선, 롱변기 카드 왼쪽 절반에 착지)
+A(f'<circle cx="{c1-80}" cy="{zone_top+4}" r="4.5" fill="{GREEN}"/>')
+A(f'<line x1="{c1-80}" y1="{zone_top+4}" x2="{c1-80}" y2="{zone_bot-9}" stroke="{GREEN}" stroke-width="3" marker-end="url(#arwg)"/>')
+# NEUTRAL → 롱변기 (노란 ㄱ자 합류선, 롱변기 카드 오른쪽 절반에 착지)
+A(f'<circle cx="{c2}" cy="{zone_top+4}" r="4.5" fill="{GOLD}"/>')
+A(f'<path d="M {c2} {zone_top+4} L {c2} {mid1} L {c1+80} {mid1} L {c1+80} {zone_bot-9}" fill="none" stroke="{GOLD}" stroke-width="3" marker-end="url(#arwy)"/>')
+# BEAR → 양변기 (빨간 ㄱ자)
+A(f'<circle cx="{c3}" cy="{zone_top+4}" r="4.5" fill="{RED}"/>')
+A(f'<path d="M {c3} {zone_top+4} L {c3} {mid2} L {c2} {mid2} L {c2} {zone_bot-9}" fill="none" stroke="{RED}" stroke-width="3" marker-end="url(#arwr)"/>')
+# BEAR 91일째부터 → 황금변기 (주황 점선 — 희귀한 예외 경로)
+A(f'<circle cx="{c3+95}" cy="{zone_top+4}" r="4.5" fill="{AMBER}"/>')
+A(f'<line x1="{c3+95}" y1="{zone_top+4}" x2="{c3+95}" y2="{zone_bot-9}" stroke="{AMBER}" stroke-width="2.4" stroke-dasharray="6 4" marker-end="url(#arwa)"/>')
+
+# 선 위 라벨 (불투명 배경 pill)
+_flow_pill(c1 - 80, mid2, "BULL → 롱변기", GREEN)
+_flow_pill((c2 + c1 + 80) / 2, mid1, "NEUTRAL도 롱변기!", GOLD, fs=13)
+_flow_pill((c3 + c2) / 2, mid2, "BEAR 첫 90일 → 양변기", RED)
+_flow_pill(c3 + 95, mid1, "91일째부터 (16y 0회)", AMBER, fs=11.5)
+
+y = zone_bot
 eh = 102
 for i, (t, c, frm, what, kind) in enumerate(eng):
     x = ix0 + i * (rw + rg)
@@ -270,9 +307,12 @@ H = int(y)
 defs = (
     '<defs>'
     f'<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{BG0}"/><stop offset="1" stop-color="{BG1}"/></linearGradient>'
-    f'<marker id="arw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
-    f'<path d="M0,0 L10,5 L0,10 z" fill="{MUT}"/></marker>'
-    '</defs>'
+    + "".join(
+        f'<marker id="{mid}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'
+        f'<path d="M0,0 L10,5 L0,10 z" fill="{col}"/></marker>'
+        for mid, col in [("arw", MUT), ("arwg", GREEN), ("arwy", GOLD), ("arwr", RED), ("arwa", AMBER)]
+    )
+    + '</defs>'
 )
 head = f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" font-family="{FONT}">'
 out = "\n".join(S)

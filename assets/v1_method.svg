@@ -1,7 +1,7 @@
-<svg viewBox="0 0 1300 1568" xmlns="http://www.w3.org/2000/svg" font-family="'Malgun Gothic','Segoe UI',sans-serif">
-<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E3440"/><stop offset="1" stop-color="#3B4252"/></linearGradient><marker id="arw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B8C0CE"/></marker></defs>
-<rect width="1300" height="1568" fill="url(#bg)"/>
-<rect x="0" y="0" width="6" height="1568" fill="#34A5C5"/>
+<svg viewBox="0 0 1300 1652" xmlns="http://www.w3.org/2000/svg" font-family="'Malgun Gothic','Segoe UI',sans-serif">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E3440"/><stop offset="1" stop-color="#3B4252"/></linearGradient><marker id="arw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#B8C0CE"/></marker><marker id="arwg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#A3BE8C"/></marker><marker id="arwy" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#EBCB8B"/></marker><marker id="arwr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#BF616A"/></marker><marker id="arwa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#D08770"/></marker></defs>
+<rect width="1300" height="1652" fill="url(#bg)"/>
+<rect x="0" y="0" width="6" height="1652" fill="#34A5C5"/>
 <text x="60" y="76" font-size="38" font-weight="800" fill="#ECEFF4">BUBE V1 매매법 — 상세 흐름도</text>
 <text x="62" y="108" font-size="18" fill="#34A5C5" font-weight="600">SOXL 3× 레버리지 · 매일 한 사이클: 레짐 판정 → 엔진 선택 → 돌파 진입 → 갭필터 → VIX 사이징 → 청산</text>
 <rect x="62" y="126" width="67" height="26" rx="13" fill="#A3BE8C" fill-opacity="0.14" stroke="#A3BE8C" stroke-opacity="0.6"/>
@@ -56,149 +56,166 @@
 <line x1="650.0" y1="382" x2="650.0" y2="405" stroke="#B8C0CE" stroke-width="2.4" marker-end="url(#arw)"/>
 <rect x="660.0" y="385.0" width="53" height="24" rx="12" fill="#81A1C1" fill-opacity="0.15" stroke="#81A1C1" stroke-opacity="0.7"/>
 <text x="686" y="402.0" font-size="12.5" font-weight="700" fill="#81A1C1" text-anchor="middle">종합 판정</text>
-<rect x="60" y="426" width="393" height="56" rx="12" fill="#A3BE8C" fill-opacity="0.12" stroke="#A3BE8C" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="60" y="426" width="6" height="56" rx="3" fill="#A3BE8C"/>
-<text x="82" y="462" font-size="20" font-weight="800" fill="#A3BE8C">🟢 BULL</text>
-<text x="431" y="462" font-size="14" fill="#B8C0CE" text-anchor="end">상승장</text>
-<rect x="483" y="426" width="393" height="56" rx="12" fill="#EBCB8B" fill-opacity="0.12" stroke="#EBCB8B" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="483" y="426" width="6" height="56" rx="3" fill="#EBCB8B"/>
-<text x="505" y="462" font-size="20" font-weight="800" fill="#EBCB8B">🟡 NEUTRAL</text>
-<text x="854" y="462" font-size="14" fill="#B8C0CE" text-anchor="end">중립장</text>
-<rect x="906" y="426" width="393" height="56" rx="12" fill="#BF616A" fill-opacity="0.12" stroke="#BF616A" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="906" y="426" width="6" height="56" rx="3" fill="#BF616A"/>
-<text x="928" y="462" font-size="20" font-weight="800" fill="#BF616A">🔴 BEAR</text>
-<text x="1277" y="462" font-size="14" fill="#B8C0CE" text-anchor="end">하락장</text>
-<circle cx="76" cy="502" r="15" fill="#EBCB8B" fill-opacity="0.18" stroke="#EBCB8B" stroke-width="2"/>
-<text x="76" y="507" font-size="15" font-weight="800" fill="#EBCB8B" text-anchor="middle">1</text>
-<text x="102" y="508" font-size="19" font-weight="800" fill="#ECEFF4">엔진 선택 — 레짐이 매매 엔진을 결정</text>
-<line x1="256.5" y1="518" x2="256.5" y2="543" stroke="#A3BE8C" stroke-width="2.4" marker-end="url(#arw)"/>
-<line x1="679.5" y1="518" x2="679.5" y2="543" stroke="#EBCB8B" stroke-width="2.4" marker-end="url(#arw)"/>
-<line x1="1102.5" y1="518" x2="1102.5" y2="543" stroke="#BF616A" stroke-width="2.4" marker-end="url(#arw)"/>
-<rect x="60" y="564" width="393" height="102" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#34A5C5" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="60" y="564" width="6" height="102" rx="3" fill="#34A5C5"/>
-<text x="82" y="596" font-size="17" font-weight="700" fill="#34A5C5">롱변기 (Long-byungi)</text>
-<rect x="317" y="578" width="114" height="24" rx="12" fill="#34A5C5" fill-opacity="0.18" stroke="#34A5C5" stroke-opacity="0.6"/>
-<text x="374" y="595" font-size="12.5" font-weight="700" fill="#34A5C5" text-anchor="middle">BULL · NEUTRAL</text>
-<line x1="82" y1="608" x2="431" y2="608" stroke="#4C566A"/>
-<text x="82" y="632" font-size="14.5" fill="#ECEFF4">SOXL 단방향 매수</text>
-<text x="82" y="654" font-size="13" fill="#B8C0CE">성격: 추세 추종</text>
-<rect x="483" y="564" width="393" height="102" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#EBCB8B" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="483" y="564" width="6" height="102" rx="3" fill="#EBCB8B"/>
-<text x="505" y="596" font-size="17" font-weight="700" fill="#EBCB8B">양변기 v5 (Yang-byungi)</text>
-<rect x="802" y="578" width="52" height="24" rx="12" fill="#EBCB8B" fill-opacity="0.18" stroke="#EBCB8B" stroke-opacity="0.6"/>
-<text x="828" y="595" font-size="12.5" font-weight="700" fill="#EBCB8B" text-anchor="middle">BEAR</text>
-<line x1="505" y1="608" x2="854" y2="608" stroke="#4C566A"/>
-<text x="505" y="632" font-size="14.5" fill="#ECEFF4">SOXL 롱 + SOXS 숏 페어</text>
-<text x="505" y="654" font-size="13" fill="#B8C0CE">성격: 평균회귀 보유</text>
-<rect x="906" y="564" width="393" height="102" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#D08770" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="906" y="564" width="6" height="102" rx="3" fill="#D08770"/>
-<text x="928" y="596" font-size="17" font-weight="700" fill="#D08770">황금변기 (Golden-byungi)</text>
-<rect x="1183" y="578" width="94" height="24" rx="12" fill="#D08770" fill-opacity="0.18" stroke="#D08770" stroke-opacity="0.6"/>
-<text x="1230" y="595" font-size="12.5" font-weight="700" fill="#D08770" text-anchor="middle">BEAR 90일↑</text>
-<line x1="928" y1="608" x2="1277" y2="608" stroke="#4C566A"/>
-<text x="928" y="632" font-size="14.5" fill="#ECEFF4">SOXL 변동성 돌파</text>
-<text x="928" y="654" font-size="13" fill="#B8C0CE">성격: tail 보험 (실데이터 0회)</text>
-<circle cx="76" cy="686" r="15" fill="#A3BE8C" fill-opacity="0.18" stroke="#A3BE8C" stroke-width="2"/>
-<text x="76" y="691" font-size="15" font-weight="800" fill="#A3BE8C" text-anchor="middle">2</text>
-<text x="102" y="692" font-size="19" font-weight="800" fill="#ECEFF4">진입 — 09:35 ET · 전부 stop-buy 변동성 돌파 (딥매수 아님)</text>
-<line x1="256.5" y1="702" x2="256.5" y2="723" stroke="#34A5C5" stroke-width="2.4" marker-end="url(#arw)"/>
-<line x1="679.5" y1="702" x2="679.5" y2="723" stroke="#EBCB8B" stroke-width="2.4" marker-end="url(#arw)"/>
-<line x1="1102.5" y1="702" x2="1102.5" y2="723" stroke="#D08770" stroke-width="2.4" marker-end="url(#arw)"/>
-<rect x="60" y="744" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#34A5C5" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="60" y="744" width="6" height="114" rx="3" fill="#34A5C5"/>
-<text x="82" y="774" font-size="16" font-weight="700" fill="#34A5C5">롱변기 진입</text>
-<line x1="82" y1="784" x2="431" y2="784" stroke="#4C566A"/>
-<text x="82" y="806" font-size="13.5" fill="#ECEFF4">시가 대비 +1.5% 돌파 시</text>
-<text x="82" y="827" font-size="13.5" fill="#ECEFF4">추격 매수 (buy-stop)</text>
-<text x="82" y="848" font-size="13.5" fill="#ECEFF4">→ 강갭업엔 marketable-limit</text>
-<rect x="483" y="744" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#EBCB8B" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="483" y="744" width="6" height="114" rx="3" fill="#EBCB8B"/>
-<text x="505" y="774" font-size="16" font-weight="700" fill="#EBCB8B">양변기 진입</text>
-<line x1="505" y1="784" x2="854" y2="784" stroke="#4C566A"/>
-<text x="505" y="806" font-size="13.5" fill="#ECEFF4">SOXL: 시가 +1.5% 돌파 매수</text>
-<text x="505" y="827" font-size="13.5" fill="#ECEFF4">SOXS: 시가 +6% 돌파 매수</text>
-<text x="505" y="848" font-size="13.5" fill="#ECEFF4">(인버스 매수 = 합성 숏)</text>
-<rect x="906" y="744" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#D08770" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="906" y="744" width="6" height="114" rx="3" fill="#D08770"/>
-<text x="928" y="774" font-size="16" font-weight="700" fill="#D08770">황금변기 진입</text>
-<line x1="928" y1="784" x2="1277" y2="784" stroke="#4C566A"/>
-<text x="928" y="806" font-size="13.5" fill="#ECEFF4">Keltner 상단 밴드 돌파 시</text>
-<text x="928" y="827" font-size="13.5" fill="#ECEFF4">변동성 K-vol 돌파 매수</text>
-<text x="928" y="848" font-size="13.5" fill="#ECEFF4">장기 L자 곰장 방어용</text>
-<circle cx="76" cy="880" r="15" fill="#D08770" fill-opacity="0.18" stroke="#D08770" stroke-width="2"/>
-<text x="76" y="885" font-size="15" font-weight="800" fill="#D08770" text-anchor="middle">3</text>
-<text x="102" y="886" font-size="19" font-weight="800" fill="#ECEFF4">갭필터 — 비대칭 A안 (2026-06-03)</text>
-<text x="433" y="886" font-size="13.5" fill="#B8C0CE">나쁜 진입만 거르고 좋은 진입은 살린다</text>
-<rect x="60" y="900" width="604.5" height="74" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#A3BE8C" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="60" y="900" width="6" height="74" rx="3" fill="#A3BE8C"/>
-<text x="82" y="930" font-size="15" font-weight="700" fill="#A3BE8C">롱변기 · 양변기롱 (SOXL 매수)</text>
-<text x="82" y="954" font-size="13.5" fill="#ECEFF4">갭다운 −5% 이하만 진입 차단 · 갭업은 허용 (정상보다 ~2배 좋은 진입)</text>
-<rect x="694.5" y="900" width="604.5" height="74" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#BF616A" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="694.5" y="900" width="6" height="74" rx="3" fill="#BF616A"/>
-<text x="716.5" y="930" font-size="15" font-weight="700" fill="#BF616A">양변기숏 (SOXS 매수)</text>
-<text x="716.5" y="954" font-size="13.5" fill="#ECEFF4">대칭 차단 유지 · |갭| &gt; 5% 면 진입 차단 (양방향)</text>
-<line x1="650.0" y1="978" x2="650.0" y2="1001" stroke="#B8C0CE" stroke-width="2.4" marker-end="url(#arw)"/>
-<rect x="660.0" y="981.0" width="112" height="24" rx="12" fill="#EBCB8B" fill-opacity="0.15" stroke="#EBCB8B" stroke-opacity="0.7"/>
-<text x="716" y="998.0" font-size="12.5" font-weight="700" fill="#EBCB8B" text-anchor="middle">진입 확정분에 비중 적용</text>
-<circle cx="76" cy="1022" r="15" fill="#EBCB8B" fill-opacity="0.18" stroke="#EBCB8B" stroke-width="2"/>
-<text x="76" y="1027" font-size="15" font-weight="800" fill="#EBCB8B" text-anchor="middle">4</text>
-<text x="102" y="1028" font-size="19" font-weight="800" fill="#ECEFF4">VIX 동적 비중 — 변동성이 노출을 정한다</text>
-<text x="473" y="1028" font-size="13.5" fill="#B8C0CE">전일 VIX 기준 · 마진 미사용 (cap 1.0)</text>
-<rect x="60" y="1042" width="816" height="168" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#EBCB8B" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="60" y="1042" width="6" height="168" rx="3" fill="#EBCB8B"/>
-<text x="82" y="1076" font-size="16" font-weight="700" fill="#EBCB8B">비중 공식</text>
-<text x="82" y="1114" font-size="17" font-family="monospace" fill="#ECEFF4">k = 0.60 × clip( 20 / VIX , 0.5 , 2.0 )</text>
-<text x="82" y="1144" font-size="17" font-family="monospace" fill="#ECEFF4">alloc = min( k × 엔진비중 , 1.0 )</text>
-<text x="82" y="1176" font-size="14" fill="#34A5C5">VIX↑ (공포) → 비중↓   ·   VIX↓ (안정) → 비중↑</text>
-<text x="82" y="1198" font-size="13" fill="#B8C0CE">margin 0% — 최대 100% 현금 한도, broker 강제청산 원천 차단</text>
-<rect x="906" y="1042" width="393" height="168" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#34A5C5" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="906" y="1042" width="6" height="168" rx="3" fill="#34A5C5"/>
-<text x="928" y="1072" font-size="15" font-weight="700" fill="#34A5C5">VIX → 비중 직관</text>
-<text x="928" y="1100" font-size="13.5" font-family="monospace" fill="#ECEFF4">VIX 10</text>
-<text x="1034" y="1100" font-size="13" fill="#B8C0CE">scale 2.0</text>
-<text x="1277" y="1100" font-size="13.5" font-weight="700" fill="#A3BE8C" text-anchor="end">풀로딩</text>
-<text x="928" y="1128" font-size="13.5" font-family="monospace" fill="#ECEFF4">VIX 20</text>
-<text x="1034" y="1128" font-size="13" fill="#B8C0CE">scale 1.0</text>
-<text x="1277" y="1128" font-size="13.5" font-weight="700" fill="#EBCB8B" text-anchor="end">중립</text>
-<text x="928" y="1156" font-size="13.5" font-family="monospace" fill="#ECEFF4">VIX 40</text>
-<text x="1034" y="1156" font-size="13" fill="#B8C0CE">scale 0.5</text>
-<text x="1277" y="1156" font-size="13.5" font-weight="700" fill="#D08770" text-anchor="end">디리스킹</text>
-<text x="928" y="1184" font-size="13.5" font-family="monospace" fill="#ECEFF4">VIX 80</text>
-<text x="1034" y="1184" font-size="13" fill="#B8C0CE">lo clip</text>
-<text x="1277" y="1184" font-size="13.5" font-weight="700" fill="#BF616A" text-anchor="end">최소</text>
-<line x1="650.0" y1="1214" x2="650.0" y2="1237" stroke="#B8C0CE" stroke-width="2.4" marker-end="url(#arw)"/>
-<rect x="660.0" y="1217.0" width="90" height="24" rx="12" fill="#A3BE8C" fill-opacity="0.15" stroke="#A3BE8C" stroke-opacity="0.7"/>
-<text x="705" y="1234.0" font-size="12.5" font-weight="700" fill="#A3BE8C" text-anchor="middle">당일 보유 → 청산</text>
-<circle cx="76" cy="1258" r="15" fill="#A3BE8C" fill-opacity="0.18" stroke="#A3BE8C" stroke-width="2"/>
-<text x="76" y="1263" font-size="15" font-weight="800" fill="#A3BE8C" text-anchor="middle">5</text>
-<text x="102" y="1264" font-size="19" font-weight="800" fill="#ECEFF4">청산 / 보유 — 엔진별 출구</text>
-<text x="351" y="1264" font-size="13.5" fill="#B8C0CE">롱변기 손절은 VIX-적응 S_wide (2026-06-22 배포)</text>
-<line x1="256.5" y1="1272" x2="256.5" y2="1293" stroke="#34A5C5" stroke-width="2.4" marker-end="url(#arw)"/>
-<line x1="679.5" y1="1272" x2="679.5" y2="1293" stroke="#EBCB8B" stroke-width="2.4" marker-end="url(#arw)"/>
-<line x1="1102.5" y1="1272" x2="1102.5" y2="1293" stroke="#D08770" stroke-width="2.4" marker-end="url(#arw)"/>
-<rect x="60" y="1314" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#34A5C5" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="60" y="1314" width="6" height="114" rx="3" fill="#34A5C5"/>
-<text x="82" y="1344" font-size="16" font-weight="700" fill="#34A5C5">롱변기 청산</text>
-<line x1="82" y1="1354" x2="431" y2="1354" stroke="#4C566A"/>
-<text x="82" y="1376" font-size="13.5" fill="#ECEFF4">장중: VIX-적응 손절 S_wide</text>
-<text x="82" y="1397" font-size="13.5" fill="#ECEFF4">−8% × clip( VIX/20 , 1 , 1.5 )</text>
-<text x="82" y="1418" font-size="13.5" fill="#ECEFF4">익일 시가(MOO) 전량 청산</text>
-<rect x="483" y="1314" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#EBCB8B" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="483" y="1314" width="6" height="114" rx="3" fill="#EBCB8B"/>
-<text x="505" y="1344" font-size="16" font-weight="700" fill="#EBCB8B">양변기 청산</text>
-<line x1="505" y1="1354" x2="854" y2="1354" stroke="#4C566A"/>
-<text x="505" y="1376" font-size="13.5" fill="#ECEFF4">종가(LOC) 청산 · 장중 손절 없음</text>
-<text x="505" y="1397" font-size="13.5" fill="#ECEFF4">손실분 overnight carry →</text>
-<text x="505" y="1418" font-size="13.5" fill="#ECEFF4">익일 반등 평균회귀 알파</text>
-<rect x="906" y="1314" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#D08770" stroke-opacity="0.8" stroke-width="1.4"/>
-<rect x="906" y="1314" width="6" height="114" rx="3" fill="#D08770"/>
-<text x="928" y="1344" font-size="16" font-weight="700" fill="#D08770">황금변기 청산</text>
-<line x1="928" y1="1354" x2="1277" y2="1354" stroke="#4C566A"/>
-<text x="928" y="1376" font-size="13.5" fill="#ECEFF4">변동성 밴드 이탈 시 청산</text>
-<text x="928" y="1397" font-size="13.5" fill="#ECEFF4">곰장 종료까지 보유</text>
-<text x="928" y="1418" font-size="13.5" fill="#ECEFF4">tail 위험 흡수 (16y 발동 0회)</text>
-<rect x="60" y="1452" width="1180" height="86" rx="12" fill="#34A5C5" fill-opacity="0.08" stroke="#34A5C5" stroke-opacity="0.45"/>
-<text x="84" y="1484" font-size="15.5" font-weight="700" fill="#34A5C5">핵심 — 3개 엔진 모두 stop-buy 모멘텀(변동성 돌파) 진입. 평균회귀 알파는 '진입'이 아니라 양변기 '보유기'에서 나온다.</text>
-<text x="84" y="1510" font-size="13.5" fill="#B8C0CE">진짜 알파 = ① 레짐 전환 + ② VIX 동적 사이징.  SOXL Buy&amp;Hold −90% 낙폭을 −23~−31%로 '길들이는' 위험관리 도구.</text>
-<text x="84" y="1530" font-size="12.5" fill="#7B8598">16y 캐논 Calmar ~2.5 · bootstrap 중앙값 ~1.9 = 운영 기대치 · SOXL 단일자산 · 소자본 유효.</text>
+<rect x="60" y="426" width="393" height="84" rx="12" fill="#A3BE8C" fill-opacity="0.12" stroke="#A3BE8C" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="60" y="426" width="6" height="84" rx="3" fill="#A3BE8C"/>
+<text x="82" y="460" font-size="20" font-weight="800" fill="#A3BE8C">🟢 BULL</text>
+<text x="431" y="460" font-size="14" fill="#B8C0CE" text-anchor="end">상승장</text>
+<text x="82" y="490" font-size="15" font-weight="700" fill="#34A5C5">→ 🚀 롱변기로</text>
+<rect x="483" y="426" width="393" height="84" rx="12" fill="#EBCB8B" fill-opacity="0.12" stroke="#EBCB8B" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="483" y="426" width="6" height="84" rx="3" fill="#EBCB8B"/>
+<text x="505" y="460" font-size="20" font-weight="800" fill="#EBCB8B">🟡 NEUTRAL</text>
+<text x="854" y="460" font-size="14" fill="#B8C0CE" text-anchor="end">중립장</text>
+<text x="505" y="490" font-size="15" font-weight="700" fill="#34A5C5">→ 🚀 롱변기로 (BULL과 동일 취급!)</text>
+<rect x="906" y="426" width="393" height="84" rx="12" fill="#BF616A" fill-opacity="0.12" stroke="#BF616A" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="906" y="426" width="6" height="84" rx="3" fill="#BF616A"/>
+<text x="928" y="460" font-size="20" font-weight="800" fill="#BF616A">🔴 BEAR</text>
+<text x="1277" y="460" font-size="14" fill="#B8C0CE" text-anchor="end">하락장</text>
+<text x="928" y="490" font-size="15" font-weight="700" fill="#EBCB8B">→ 🚽 양변기로 (91일째부턴 ✨황금변기)</text>
+<circle cx="76" cy="528" r="15" fill="#EBCB8B" fill-opacity="0.18" stroke="#EBCB8B" stroke-width="2"/>
+<text x="76" y="533" font-size="15" font-weight="800" fill="#EBCB8B" text-anchor="middle">1</text>
+<text x="102" y="534" font-size="19" font-weight="800" fill="#ECEFF4">엔진 선택 — 레짐이 매매 엔진을 결정</text>
+<text x="441" y="534" font-size="13.5" fill="#B8C0CE">★ BULL과 NEUTRAL은 둘 다 롱변기 · BEAR만 양변기 — 선 색을 따라가세요</text>
+<circle cx="176.5" cy="552" r="4.5" fill="#A3BE8C"/>
+<line x1="176.5" y1="552" x2="176.5" y2="639" stroke="#A3BE8C" stroke-width="3" marker-end="url(#arwg)"/>
+<circle cx="679.5" cy="552" r="4.5" fill="#EBCB8B"/>
+<path d="M 679.5 552 L 679.5 578 L 336.5 578 L 336.5 639" fill="none" stroke="#EBCB8B" stroke-width="3" marker-end="url(#arwy)"/>
+<circle cx="1102.5" cy="552" r="4.5" fill="#BF616A"/>
+<path d="M 1102.5 552 L 1102.5 616 L 679.5 616 L 679.5 639" fill="none" stroke="#BF616A" stroke-width="3" marker-end="url(#arwr)"/>
+<circle cx="1197.5" cy="552" r="4.5" fill="#D08770"/>
+<line x1="1197.5" y1="552" x2="1197.5" y2="639" stroke="#D08770" stroke-width="2.4" stroke-dasharray="6 4" marker-end="url(#arwa)"/>
+<rect x="125" y="603" width="103" height="26" rx="13" fill="#2E3440" stroke="#A3BE8C" stroke-opacity="0.9" stroke-width="1.3"/>
+<text x="176" y="620.5" font-size="12.5" font-weight="700" fill="#A3BE8C" text-anchor="middle">BULL → 롱변기</text>
+<rect x="442" y="565" width="131" height="26" rx="13" fill="#2E3440" stroke="#EBCB8B" stroke-opacity="0.9" stroke-width="1.3"/>
+<text x="508" y="582.5" font-size="13" font-weight="700" fill="#EBCB8B" text-anchor="middle">NEUTRAL도 롱변기!</text>
+<rect x="816" y="603" width="149" height="26" rx="13" fill="#2E3440" stroke="#BF616A" stroke-opacity="0.9" stroke-width="1.3"/>
+<text x="891" y="620.5" font-size="12.5" font-weight="700" fill="#BF616A" text-anchor="middle">BEAR 첫 90일 → 양변기</text>
+<rect x="1131" y="565" width="133" height="26" rx="13" fill="#2E3440" stroke="#D08770" stroke-opacity="0.9" stroke-width="1.3"/>
+<text x="1198" y="582.5" font-size="11.5" font-weight="700" fill="#D08770" text-anchor="middle">91일째부터 (16y 0회)</text>
+<rect x="60" y="648" width="393" height="102" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#34A5C5" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="60" y="648" width="6" height="102" rx="3" fill="#34A5C5"/>
+<text x="82" y="680" font-size="17" font-weight="700" fill="#34A5C5">롱변기 (Long-byungi)</text>
+<rect x="317" y="662" width="114" height="24" rx="12" fill="#34A5C5" fill-opacity="0.18" stroke="#34A5C5" stroke-opacity="0.6"/>
+<text x="374" y="679" font-size="12.5" font-weight="700" fill="#34A5C5" text-anchor="middle">BULL · NEUTRAL</text>
+<line x1="82" y1="692" x2="431" y2="692" stroke="#4C566A"/>
+<text x="82" y="716" font-size="14.5" fill="#ECEFF4">SOXL 단방향 매수</text>
+<text x="82" y="738" font-size="13" fill="#B8C0CE">성격: 추세 추종</text>
+<rect x="483" y="648" width="393" height="102" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#EBCB8B" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="483" y="648" width="6" height="102" rx="3" fill="#EBCB8B"/>
+<text x="505" y="680" font-size="17" font-weight="700" fill="#EBCB8B">양변기 v5 (Yang-byungi)</text>
+<rect x="802" y="662" width="52" height="24" rx="12" fill="#EBCB8B" fill-opacity="0.18" stroke="#EBCB8B" stroke-opacity="0.6"/>
+<text x="828" y="679" font-size="12.5" font-weight="700" fill="#EBCB8B" text-anchor="middle">BEAR</text>
+<line x1="505" y1="692" x2="854" y2="692" stroke="#4C566A"/>
+<text x="505" y="716" font-size="14.5" fill="#ECEFF4">SOXL 롱 + SOXS 숏 페어</text>
+<text x="505" y="738" font-size="13" fill="#B8C0CE">성격: 평균회귀 보유</text>
+<rect x="906" y="648" width="393" height="102" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#D08770" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="906" y="648" width="6" height="102" rx="3" fill="#D08770"/>
+<text x="928" y="680" font-size="17" font-weight="700" fill="#D08770">황금변기 (Golden-byungi)</text>
+<rect x="1183" y="662" width="94" height="24" rx="12" fill="#D08770" fill-opacity="0.18" stroke="#D08770" stroke-opacity="0.6"/>
+<text x="1230" y="679" font-size="12.5" font-weight="700" fill="#D08770" text-anchor="middle">BEAR 90일↑</text>
+<line x1="928" y1="692" x2="1277" y2="692" stroke="#4C566A"/>
+<text x="928" y="716" font-size="14.5" fill="#ECEFF4">SOXL 변동성 돌파</text>
+<text x="928" y="738" font-size="13" fill="#B8C0CE">성격: tail 보험 (실데이터 0회)</text>
+<circle cx="76" cy="770" r="15" fill="#A3BE8C" fill-opacity="0.18" stroke="#A3BE8C" stroke-width="2"/>
+<text x="76" y="775" font-size="15" font-weight="800" fill="#A3BE8C" text-anchor="middle">2</text>
+<text x="102" y="776" font-size="19" font-weight="800" fill="#ECEFF4">진입 — 09:35 ET · 전부 stop-buy 변동성 돌파 (딥매수 아님)</text>
+<line x1="256.5" y1="786" x2="256.5" y2="807" stroke="#34A5C5" stroke-width="2.4" marker-end="url(#arw)"/>
+<line x1="679.5" y1="786" x2="679.5" y2="807" stroke="#EBCB8B" stroke-width="2.4" marker-end="url(#arw)"/>
+<line x1="1102.5" y1="786" x2="1102.5" y2="807" stroke="#D08770" stroke-width="2.4" marker-end="url(#arw)"/>
+<rect x="60" y="828" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#34A5C5" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="60" y="828" width="6" height="114" rx="3" fill="#34A5C5"/>
+<text x="82" y="858" font-size="16" font-weight="700" fill="#34A5C5">롱변기 진입</text>
+<line x1="82" y1="868" x2="431" y2="868" stroke="#4C566A"/>
+<text x="82" y="890" font-size="13.5" fill="#ECEFF4">시가 대비 +1.5% 돌파 시</text>
+<text x="82" y="911" font-size="13.5" fill="#ECEFF4">추격 매수 (buy-stop)</text>
+<text x="82" y="932" font-size="13.5" fill="#ECEFF4">→ 강갭업엔 marketable-limit</text>
+<rect x="483" y="828" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#EBCB8B" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="483" y="828" width="6" height="114" rx="3" fill="#EBCB8B"/>
+<text x="505" y="858" font-size="16" font-weight="700" fill="#EBCB8B">양변기 진입</text>
+<line x1="505" y1="868" x2="854" y2="868" stroke="#4C566A"/>
+<text x="505" y="890" font-size="13.5" fill="#ECEFF4">SOXL: 시가 +1.5% 돌파 매수</text>
+<text x="505" y="911" font-size="13.5" fill="#ECEFF4">SOXS: 시가 +6% 돌파 매수</text>
+<text x="505" y="932" font-size="13.5" fill="#ECEFF4">(인버스 매수 = 합성 숏)</text>
+<rect x="906" y="828" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#D08770" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="906" y="828" width="6" height="114" rx="3" fill="#D08770"/>
+<text x="928" y="858" font-size="16" font-weight="700" fill="#D08770">황금변기 진입</text>
+<line x1="928" y1="868" x2="1277" y2="868" stroke="#4C566A"/>
+<text x="928" y="890" font-size="13.5" fill="#ECEFF4">Keltner 상단 밴드 돌파 시</text>
+<text x="928" y="911" font-size="13.5" fill="#ECEFF4">변동성 K-vol 돌파 매수</text>
+<text x="928" y="932" font-size="13.5" fill="#ECEFF4">장기 L자 곰장 방어용</text>
+<circle cx="76" cy="964" r="15" fill="#D08770" fill-opacity="0.18" stroke="#D08770" stroke-width="2"/>
+<text x="76" y="969" font-size="15" font-weight="800" fill="#D08770" text-anchor="middle">3</text>
+<text x="102" y="970" font-size="19" font-weight="800" fill="#ECEFF4">갭필터 — 비대칭 A안 (2026-06-03)</text>
+<text x="433" y="970" font-size="13.5" fill="#B8C0CE">나쁜 진입만 거르고 좋은 진입은 살린다</text>
+<rect x="60" y="984" width="604.5" height="74" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#A3BE8C" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="60" y="984" width="6" height="74" rx="3" fill="#A3BE8C"/>
+<text x="82" y="1014" font-size="15" font-weight="700" fill="#A3BE8C">롱변기 · 양변기롱 (SOXL 매수)</text>
+<text x="82" y="1038" font-size="13.5" fill="#ECEFF4">갭다운 −5% 이하만 진입 차단 · 갭업은 허용 (정상보다 ~2배 좋은 진입)</text>
+<rect x="694.5" y="984" width="604.5" height="74" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#BF616A" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="694.5" y="984" width="6" height="74" rx="3" fill="#BF616A"/>
+<text x="716.5" y="1014" font-size="15" font-weight="700" fill="#BF616A">양변기숏 (SOXS 매수)</text>
+<text x="716.5" y="1038" font-size="13.5" fill="#ECEFF4">대칭 차단 유지 · |갭| &gt; 5% 면 진입 차단 (양방향)</text>
+<line x1="650.0" y1="1062" x2="650.0" y2="1085" stroke="#B8C0CE" stroke-width="2.4" marker-end="url(#arw)"/>
+<rect x="660.0" y="1065.0" width="112" height="24" rx="12" fill="#EBCB8B" fill-opacity="0.15" stroke="#EBCB8B" stroke-opacity="0.7"/>
+<text x="716" y="1082.0" font-size="12.5" font-weight="700" fill="#EBCB8B" text-anchor="middle">진입 확정분에 비중 적용</text>
+<circle cx="76" cy="1106" r="15" fill="#EBCB8B" fill-opacity="0.18" stroke="#EBCB8B" stroke-width="2"/>
+<text x="76" y="1111" font-size="15" font-weight="800" fill="#EBCB8B" text-anchor="middle">4</text>
+<text x="102" y="1112" font-size="19" font-weight="800" fill="#ECEFF4">VIX 동적 비중 — 변동성이 노출을 정한다</text>
+<text x="473" y="1112" font-size="13.5" fill="#B8C0CE">전일 VIX 기준 · 마진 미사용 (cap 1.0)</text>
+<rect x="60" y="1126" width="816" height="168" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#EBCB8B" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="60" y="1126" width="6" height="168" rx="3" fill="#EBCB8B"/>
+<text x="82" y="1160" font-size="16" font-weight="700" fill="#EBCB8B">비중 공식</text>
+<text x="82" y="1198" font-size="17" font-family="monospace" fill="#ECEFF4">k = 0.60 × clip( 20 / VIX , 0.5 , 2.0 )</text>
+<text x="82" y="1228" font-size="17" font-family="monospace" fill="#ECEFF4">alloc = min( k × 엔진비중 , 1.0 )</text>
+<text x="82" y="1260" font-size="14" fill="#34A5C5">VIX↑ (공포) → 비중↓   ·   VIX↓ (안정) → 비중↑</text>
+<text x="82" y="1282" font-size="13" fill="#B8C0CE">margin 0% — 최대 100% 현금 한도, broker 강제청산 원천 차단</text>
+<rect x="906" y="1126" width="393" height="168" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#34A5C5" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="906" y="1126" width="6" height="168" rx="3" fill="#34A5C5"/>
+<text x="928" y="1156" font-size="15" font-weight="700" fill="#34A5C5">VIX → 비중 직관</text>
+<text x="928" y="1184" font-size="13.5" font-family="monospace" fill="#ECEFF4">VIX 10</text>
+<text x="1034" y="1184" font-size="13" fill="#B8C0CE">scale 2.0</text>
+<text x="1277" y="1184" font-size="13.5" font-weight="700" fill="#A3BE8C" text-anchor="end">풀로딩</text>
+<text x="928" y="1212" font-size="13.5" font-family="monospace" fill="#ECEFF4">VIX 20</text>
+<text x="1034" y="1212" font-size="13" fill="#B8C0CE">scale 1.0</text>
+<text x="1277" y="1212" font-size="13.5" font-weight="700" fill="#EBCB8B" text-anchor="end">중립</text>
+<text x="928" y="1240" font-size="13.5" font-family="monospace" fill="#ECEFF4">VIX 40</text>
+<text x="1034" y="1240" font-size="13" fill="#B8C0CE">scale 0.5</text>
+<text x="1277" y="1240" font-size="13.5" font-weight="700" fill="#D08770" text-anchor="end">디리스킹</text>
+<text x="928" y="1268" font-size="13.5" font-family="monospace" fill="#ECEFF4">VIX 80</text>
+<text x="1034" y="1268" font-size="13" fill="#B8C0CE">lo clip</text>
+<text x="1277" y="1268" font-size="13.5" font-weight="700" fill="#BF616A" text-anchor="end">최소</text>
+<line x1="650.0" y1="1298" x2="650.0" y2="1321" stroke="#B8C0CE" stroke-width="2.4" marker-end="url(#arw)"/>
+<rect x="660.0" y="1301.0" width="90" height="24" rx="12" fill="#A3BE8C" fill-opacity="0.15" stroke="#A3BE8C" stroke-opacity="0.7"/>
+<text x="705" y="1318.0" font-size="12.5" font-weight="700" fill="#A3BE8C" text-anchor="middle">당일 보유 → 청산</text>
+<circle cx="76" cy="1342" r="15" fill="#A3BE8C" fill-opacity="0.18" stroke="#A3BE8C" stroke-width="2"/>
+<text x="76" y="1347" font-size="15" font-weight="800" fill="#A3BE8C" text-anchor="middle">5</text>
+<text x="102" y="1348" font-size="19" font-weight="800" fill="#ECEFF4">청산 / 보유 — 엔진별 출구</text>
+<text x="351" y="1348" font-size="13.5" fill="#B8C0CE">롱변기 손절은 VIX-적응 S_wide (2026-06-22 배포)</text>
+<line x1="256.5" y1="1356" x2="256.5" y2="1377" stroke="#34A5C5" stroke-width="2.4" marker-end="url(#arw)"/>
+<line x1="679.5" y1="1356" x2="679.5" y2="1377" stroke="#EBCB8B" stroke-width="2.4" marker-end="url(#arw)"/>
+<line x1="1102.5" y1="1356" x2="1102.5" y2="1377" stroke="#D08770" stroke-width="2.4" marker-end="url(#arw)"/>
+<rect x="60" y="1398" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#34A5C5" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="60" y="1398" width="6" height="114" rx="3" fill="#34A5C5"/>
+<text x="82" y="1428" font-size="16" font-weight="700" fill="#34A5C5">롱변기 청산</text>
+<line x1="82" y1="1438" x2="431" y2="1438" stroke="#4C566A"/>
+<text x="82" y="1460" font-size="13.5" fill="#ECEFF4">장중: VIX-적응 손절 S_wide</text>
+<text x="82" y="1481" font-size="13.5" fill="#ECEFF4">−8% × clip( VIX/20 , 1 , 1.5 )</text>
+<text x="82" y="1502" font-size="13.5" fill="#ECEFF4">익일 시가(MOO) 전량 청산</text>
+<rect x="483" y="1398" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#EBCB8B" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="483" y="1398" width="6" height="114" rx="3" fill="#EBCB8B"/>
+<text x="505" y="1428" font-size="16" font-weight="700" fill="#EBCB8B">양변기 청산</text>
+<line x1="505" y1="1438" x2="854" y2="1438" stroke="#4C566A"/>
+<text x="505" y="1460" font-size="13.5" fill="#ECEFF4">종가(LOC) 청산 · 장중 손절 없음</text>
+<text x="505" y="1481" font-size="13.5" fill="#ECEFF4">손실분 overnight carry →</text>
+<text x="505" y="1502" font-size="13.5" fill="#ECEFF4">익일 반등 평균회귀 알파</text>
+<rect x="906" y="1398" width="393" height="114" rx="12" fill="#3B4252" fill-opacity="1.0" stroke="#D08770" stroke-opacity="0.8" stroke-width="1.4"/>
+<rect x="906" y="1398" width="6" height="114" rx="3" fill="#D08770"/>
+<text x="928" y="1428" font-size="16" font-weight="700" fill="#D08770">황금변기 청산</text>
+<line x1="928" y1="1438" x2="1277" y2="1438" stroke="#4C566A"/>
+<text x="928" y="1460" font-size="13.5" fill="#ECEFF4">변동성 밴드 이탈 시 청산</text>
+<text x="928" y="1481" font-size="13.5" fill="#ECEFF4">곰장 종료까지 보유</text>
+<text x="928" y="1502" font-size="13.5" fill="#ECEFF4">tail 위험 흡수 (16y 발동 0회)</text>
+<rect x="60" y="1536" width="1180" height="86" rx="12" fill="#34A5C5" fill-opacity="0.08" stroke="#34A5C5" stroke-opacity="0.45"/>
+<text x="84" y="1568" font-size="15.5" font-weight="700" fill="#34A5C5">핵심 — 3개 엔진 모두 stop-buy 모멘텀(변동성 돌파) 진입. 평균회귀 알파는 '진입'이 아니라 양변기 '보유기'에서 나온다.</text>
+<text x="84" y="1594" font-size="13.5" fill="#B8C0CE">진짜 알파 = ① 레짐 전환 + ② VIX 동적 사이징.  SOXL Buy&amp;Hold −90% 낙폭을 −23~−31%로 '길들이는' 위험관리 도구.</text>
+<text x="84" y="1614" font-size="12.5" fill="#7B8598">16y 캐논 Calmar ~2.5 · bootstrap 중앙값 ~1.9 = 운영 기대치 · SOXL 단일자산 · 소자본 유효.</text>
 </svg>
