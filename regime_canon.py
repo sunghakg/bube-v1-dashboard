@@ -87,7 +87,9 @@ def prepare_signal_frame(spy_close: pd.Series, soxl_close: pd.Series,
     행이 죽지 않고 해당일 fast만 비활성."""
     spy_ma200 = spy_close.rolling(200).mean()
     soxl_ma50 = soxl_close.rolling(50).mean()
-    soxl_mom5 = soxl_close.pct_change(5)
+    # fill_method=None: NaN 행(개장 전 합성 '오늘 결정 행')을 pad하지 않음.
+    # 결측 없는 시리즈에선 종전과 수치 동일 (pandas pad 기본값 deprecation 대응).
+    soxl_mom5 = soxl_close.pct_change(5, fill_method=None)
     qqq_rsi = weekly_rsi_daily(qqq_close)
 
     df = pd.DataFrame(index=spy_close.index)
