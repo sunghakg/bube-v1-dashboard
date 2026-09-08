@@ -808,7 +808,21 @@ elif page == "💰 실시간 현황":
                 return df["Close"]
 
             spy, soxl, qqq = _close("SPY"), _close("SOXL"), _close("QQQ")
-            vix, vix9d = _close("^VIX"), _close("^VIX9D")
+            vix = _close("^VIX")
+
+            # ★2026-09-07: VIX9D는 Cboe 공식 CDN 1차 / yfinance 폴백.
+            #   yfinance가 ^VIX9D 히스토리를 2026-07-17에 조용히 끊었고(응답은
+            #   성공, 꼬리만 없음) classify의 fast-BEAR 마스크가 notna()로 닫혀
+            #   있어 **화면에서 크래시 브레이크가 무경고로 해제**돼 있었다.
+            #   봇(2026-07-11)·백테(2026-08-31)와 같은 산출원으로 맞춘다.
+            vix9d_src = "Cboe 공식"
+            try:
+                import cboe_index
+                vix9d = cboe_index.fetch_close("VIX9D", str(start - _dt.timedelta(days=1100)),
+                                               str(end))
+            except Exception as _e:            # noqa: BLE001
+                vix9d_src = f"yfinance 폴백 (Cboe 실패: {type(_e).__name__})"
+                vix9d = _close("^VIX9D")
 
             frame = rc.prepare_signal_frame(spy_close=spy, soxl_close=soxl,
                                             vix_close=vix, qqq_close=qqq, vix9d_close=vix9d)
@@ -842,10 +856,23 @@ elif page == "💰 실시간 현황":
             except Exception:
                 vix_today = None; scale = None; k_today = None; alloc_max = None
 
+            # fast-BEAR 입력 신선도 — 조용한 결손을 화면에 띄운다
+            vix9d_warn = None
+            try:
+                _lag = (pd.Timestamp(frame.index[-1]) - pd.Timestamp(vix9d.dropna().index[-1])).days
+                if _lag > 7:
+                    vix9d_warn = (f"VIX9D가 {_lag}일 뒤처져 있습니다 "
+                                  f"(마지막 {vix9d.dropna().index[-1].date()}, 소스 {vix9d_src}). "
+                                  f"fast-BEAR 크래시 브레이크가 꺼진 채 판정 중입니다.")
+            except Exception:                  # noqa: BLE001
+                vix9d_warn = "VIX9D 시리즈가 비어 있습니다 — fast-BEAR가 꺼져 있습니다."
+
             return {
                 "regime": today_reg,
                 "votes": f"강세 {bull_v} / 약세 {bear_v}",
                 "fast_bear_ratio": ratio9d,
+                "vix9d_src": vix9d_src,
+                "vix9d_warn": vix9d_warn,
                 "active": active,
                 "bear_streak": streak,
                 "max_bear": MAX_BEAR,
@@ -864,6 +891,8 @@ elif page == "💰 실시간 현황":
     if "error" in rstate:
         st.warning(f"Regime 계산 실패: {rstate['error']}")
     else:
+        if rstate.get("vix9d_warn"):
+            st.error(f"⚠️ {rstate['vix9d_warn']}")
         active_emoji = {"longbyungi":"🚀", "yangbyungi":"🚽", "goldenbyungi":"✨"}.get(rstate["active"], "❓")
         active_name = {"longbyungi":"롱변기", "yangbyungi":"양변기 F1_A6", "goldenbyungi":"황금변기 (GOLD_ESCAPE!)"}.get(rstate["active"], rstate["active"])
         _reg = rstate["regime"]
